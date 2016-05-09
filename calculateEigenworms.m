@@ -3,11 +3,15 @@ clear
 % figure export options
 exportOptions = struct('Color','rgb');
 
+% frames to use for calculation of eigenworms, for each combination of
+% strain and worm number
+nFrames = 1000;
+
 % select data set by strain - N2, HW, NP
-for strain = {'N2', 'HW', 'NP'}
+for strain = {'N2'}%, 'HW', 'NP'}
     S = strain{:};
     % select data set by number of worms - 1, 5, 15, 25, 40
-    for N = [1 5 15 25 40]
+    for N = [1]% 5 15 25 40]
         close all
         % select number of (consecutive) frames to load from each dataset
         framesPerRead = 100000;
@@ -50,14 +54,21 @@ for strain = {'N2', 'HW', 'NP'}
                     makeAngleArrayV(squeeze(skeleta{dsCtr}(1,:,:))',squeeze(skeleta{dsCtr}(2,:,:))');
             end
             
+            % randomly pick nFrames from the data, to not oversample
+            % from correlated frames
+            if nSkeleta >= nFrames
+                frameIDs = randi(nSkeleta,nFrames);
+            else
+                frameIDs = 1:nSkeleta; % if not enough frames exist, just take all there are
+            end
+            
             % find eigenworms
             showPlots = 1;
             nEigenworms = 6;
-            [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
-            eigenProjections = projectOnEigenWorms(eigenWorms, angleArray, nEigenworms);
+            [eigenWorms, eigenVals] = findEigenWorms(angleArray(frameIDs,:), nEigenworms, showPlots);
+            eigenProjections = projectOnEigenWormsV(eigenWorms, angleArray(frameIDs,:), nEigenworms);
             
             % save eigenWorms, eigenVals and first few projections
-            nFrames = num2str(size(angleArray,1),2);
             save(['results/' S '_' num2str(N) 'worms_eigenData.mat'],'eigenWorms',...
                 'eigenVals','eigenProjections','nDatasets','nFrames')
             if showPlots
@@ -66,7 +77,7 @@ for strain = {'N2', 'HW', 'NP'}
                 figSuffix = {'var','eig','cov'};
                 for figCtr = 1:3
                     set(figure(figCtr),'name',[figName '_' figSuffix{figCtr} ...
-                        '_' num2str(nDatasets) 'datasets_' num2str(nFrames,2) 'frames'])
+                        '_' num2str(nDatasets) 'datasets_' num2str(length(frameIDs),2); 'frames'])
                     figFileName = ['figures/' figName '_' figSuffix{figCtr} '.eps'];
                     exportfig(figure(figCtr),figFileName,exportOptions)
                     system(['epstopdf ' figFileName]);
