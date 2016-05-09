@@ -6,6 +6,9 @@
 close all
 clear
 
+% figure export options
+exportOptions = struct('Color','rgb','Renderer','painters');
+
 strains = {'N2', 'HW', 'NP'};
 nStrains = length(strains);
 for N = [1 5 15 25 40]
@@ -37,6 +40,7 @@ for N = [1 5 15 25 40]
             axis image
             grid off
             xlim([-2 2]), ylim([-2 2])
+            title(['N = ' num2str(N) ' worms'])
             % PC2-3
             subplot(1,3,3)
             histogram2(eigenProjections(:,2),eigenProjections(:,3),...
@@ -45,10 +49,13 @@ for N = [1 5 15 25 40]
             axis image
             grid off
             xlim([-2 2]), ylim([-2 2])
-            
+            title([num2str(size(eigenProjections,1)/25/3600,2) ' worm-hours'])
             % annotate and save figure
             set(eigProjectionFig, 'name', ['projected amplitudes for N=' num2str(N) ' worms'])
-            savefig(eigProjectionFig,['figures/' S '_' num2str(N) 'worms_projections.fig'],'compact')
+            figName = ['figures/' S '_' num2str(N) 'worms_projections.eps'];
+            exportfig(eigProjectionFig,figName,exportOptions)
+            system(['epstopdf ' figName]);
+            system(['rm ' figName]);
 %             close(eigProjectionFig)
             clear eigenProjections
         else

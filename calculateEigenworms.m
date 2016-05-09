@@ -1,5 +1,8 @@
 clear
 
+% figure export options
+exportOptions = struct('Color','rgb');
+
 % select data set by strain - N2, HW, NP
 for strain = {'N2', 'HW', 'NP'}
     S = strain{:};
@@ -59,13 +62,15 @@ for strain = {'N2', 'HW', 'NP'}
                 'eigenVals','eigenProjections','nDatasets','nFrames')
             if showPlots
                 % save plots
-                figName = [S '_' num2str(N) 'worms_' num2str(nDatasets) 'datasets_' ...
-                    num2str(nFrames,2) 'frames'];
+                figName = [S '_' num2str(N) 'worms'];
                 figSuffix = {'var','eig','cov'};
                 for figCtr = 1:3
-                    set(figure(figCtr),'name',[figName '_' figSuffix{figCtr}])
-                    savefig(figure(figCtr),['figures/' S '_' num2str(N) ...
-                        'worms_' figSuffix{figCtr} '.fig'],'compact')
+                    set(figure(figCtr),'name',[figName '_' figSuffix{figCtr} ...
+                        '_' num2str(nDatasets) 'datasets_' num2str(nFrames,2) 'frames'])
+                    figFileName = ['figures/' figName '_' figSuffix{figCtr} '.eps'];
+                    exportfig(figure(figCtr),figFileName,exportOptions)
+                    system(['epstopdf ' figFileName]);
+                    system(['rm ' figFileName]);
                 end
             end
         else

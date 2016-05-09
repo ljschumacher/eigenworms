@@ -7,10 +7,16 @@
 close all
 clear
 
+% figure export options
+exportOptions = struct('Color','rgb');
+
 nEigenworms = 6;
 wormNumbers = [1 5 15 25 40];
 nWormNumbers = length(wormNumbers);
 plotColors= lines(nWormNumbers);
+
+% for reference, eigenworms from Brown et al. 2013
+reference = load('../Motif_Analysis/eigenWorms.mat');
 
 % loop through different strains
 for strain = {'N2', 'HW', 'NP'}
@@ -30,7 +36,7 @@ for strain = {'N2', 'HW', 'NP'}
         file = rdir(['results/' S '_' num2str(N) 'worms_eigenData.mat']);
         if ~isempty(file)
             % load eigenworm analysis result
-            load(file.name)
+            load(file.name,'eigenWorms')
             % plot first few eigenworms
             for eigCtr = 1:nEigenworms
                 plot(eigWormFig.Children(nEigenworms - eigCtr + 1),...
@@ -42,9 +48,17 @@ for strain = {'N2', 'HW', 'NP'}
             missingN(numCtr) = true;
         end
     end
+    % plot reference eigenworms from Brown et al. 2013
+    for eigCtr = 1:nEigenworms
+        subplot(ceil(nEigenworms/2),2,eigCtr)
+        plot(reference.eigenWorms(eigCtr,:),'k--')
+    end
     % annotate and save figure
     legH = legend(eigWormFig.Children(1),num2str(wormNumbers(~missingN)'));
-%     legH.Title.String = 'N worms';
+    %     legH.Title.String = 'N worms';
     set(eigWormFig, 'name', ['Strain ' S ' eigenworms'])
-    savefig(eigWormFig,['figures/' S '_eigenworms_compareN.fig'],'compact')
+    figFileName = ['figures/' S '_eigenworms_compareN.eps'];
+    exportfig(eigWormFig,figFileName,exportOptions)
+    system(['epstopdf ' figFileName]);
+    system(['rm ' figFileName]);
 end

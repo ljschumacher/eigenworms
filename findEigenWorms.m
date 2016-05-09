@@ -55,7 +55,7 @@ if isempty(~isnan(angleArray))
 end
 
 % only use non-NaN frames for calculating the covariance matrix
-covarianceMat = cov(angleArray(~isnan(angleArray(:,1)),:),1);
+covarianceMat = cov(angleArray,0,'omitrows');
 
 % get the eigenvectors and eigenvalues of the covariance matrix
 [M, eVals] = eig(covarianceMat);
