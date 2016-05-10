@@ -1,4 +1,4 @@
-function skelData = loadSkeleta(filename,nFrames,verbose)
+function skelData = loadSkeleta(filename,startIndcs,stopIndcs,verbose)
 % go through data set, load data in chunks, and assemble full skeleton
 % array from that
 
@@ -8,17 +8,22 @@ function skelData = loadSkeleta(filename,nFrames,verbose)
 % NOTE: the long dimension is the first one of h5dims, but the last one of
 % the dataset
 
-skelData = NaN(2,49,h5Dims(1));
+regionSizes = stopIndcs - startIndcs + 1;
+numRegions = length(startIndcs);
+skelData = NaN(2,49,sum(regionSizes));
+skelDataIndcs = cumsum([1; regionSizes]);
 
-for frameCtr = 1:nFrames:h5Dims(1)
+for regCtr = 1:numRegions
     % set frame up to which to read, or end of data set
-    upToFrame = min(frameCtr + nFrames - 1,h5Dims(1));
+    upToFrame = stopIndcs(regCtr);
+    fromFrame = startIndcs(regCtr);
     % load skeletal data
     if verbose
-        display(['reading frames ' num2str(frameCtr) ' to ' num2str(upToFrame)...
+        display(['reading frames ' num2str(fromFrame) ' to ' num2str(upToFrame)...
             ' out of ' num2str(h5Dims(1)) ' frames for ' filename(48:end-5)])
     end
     
-    skelData(:,:,frameCtr:upToFrame) = h5read(filename,'/skeleton',[1 1 frameCtr],...
-        [2, 49, (upToFrame - frameCtr + 1)]);   
+    skelData(:,:,skelDataIndcs(regCtr):(skelDataIndcs(regCtr + 1) - 1)) =...
+        h5read(filename,'/skeleton',[1 1 fromFrame],...
+        [2, 49, regionSizes(regCtr)]);   
 end

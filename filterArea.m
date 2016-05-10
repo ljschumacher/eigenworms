@@ -1,6 +1,9 @@
 function areaIdcs = filterArea(trajectoryData,binWidth,binRange,...
     minPeakWidth,minPeakDistance,otherFilters)
 % identify the most prominent peak in the area distribution
+if nargin<6
+    otherFilters = true(size(trajectoryData.has_skeleton));
+end
 bins = 0:binWidth:binRange;
 counts = histcounts(trajectoryData.area(otherFilters),bins,'normalization','pdf');
 [~, locs, widths, proms] = findpeaks(counts,bins(2:end)-binWidth/2,...

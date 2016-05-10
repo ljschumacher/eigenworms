@@ -13,8 +13,6 @@ for strain = {'N2'}%, 'HW', 'NP'}
     % select data set by number of worms - 1, 5, 15, 25, 40
     for N = 40%[1 5 15 25 40]
         close all
-        % select number of (consecutive) frames to load from each dataset
-        framesPerRead = 100000;
         
         % load file name descriptor - taken from Camille's Recording_LOG.xls
         load(['recordingsLog/strain' S 'worms' num2str(N) '.mat']);
@@ -42,7 +40,7 @@ for strain = {'N2'}%, 'HW', 'NP'}
             for dsCtr=1:nDatasets
                 filename = datasets{dsCtr};
                 % load skeleton data in chunks of nFrames
-                skeleta{dsCtr} = filterData(filename,framesPerRead,1);
+                skeleta{dsCtr} = filterData(filename,1);
                 skeletaSizes(dsCtr) = size(skeleta{dsCtr},3);
             end
             
