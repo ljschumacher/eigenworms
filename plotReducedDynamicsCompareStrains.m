@@ -9,9 +9,9 @@ clear
 % figure export options
 exportOptions = struct('Color','rgb','Renderer','painters');
 
-strains = {'N2', 'HW', 'NP'};
+strains = {'N2'};%, 'HW', 'NP'};
 nStrains = length(strains);
-for N = [1 5 15 25 40]
+for N = [1 5]% 5 15 25 40]
     % loop through different strains
     for strainCtr = 1:nStrains
         S = strains{strainCtr};

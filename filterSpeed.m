@@ -1,6 +1,9 @@
-function movingIdcs = filterSpeed(trajectoryData,speedThreshold)
+function movingIdcs = filterSpeed(trajectoryData,speedThreshold,otherFilters)
 % find all worms that move at least once above a given threshold speed
-wormIDs = unique(trajectoryData.worm_index_joined)';
+if nargin<3
+    otherFilters = true(size(trajectoryData.has_skeleton));
+end
+wormIDs = unique(trajectoryData.worm_index_joined(otherFilters))';
 wormMoving = false(size(wormIDs));
 for wormCtr=1:length(wormIDs) % go through worms and calculate speeds
     wormIdcs = trajectoryData.worm_index_joined==wormIDs(wormCtr);

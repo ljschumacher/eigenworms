@@ -1,5 +1,8 @@
 function out = filterData(filename,nFrames,verbose)
 % filter worm skeletal data by area, observed time, etc.
+% speed filtering is hierarchical, meaning that the first few filters will 
+% reduce the number of data to pass through the speed filter, to reduce 
+% computational intensity of computing speeds for every worm
 
 % load all metadata
 trajectoryData = h5read(filename,'/trajectories_data');
@@ -16,7 +19,7 @@ framesFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
 areaFilter = filterArea(trajectoryData,25,1500,50,50,hasSkel&framesFilter);
 
 % select worms with at least a certain speed
-speedFilter = filterSpeed(trajectoryData,0.1);
+speedFilter = filterSpeed(trajectoryData,0.1,hasSkel&framesFilter&areaFilter);
 
 % detect dust from labelled data
 dustIdcs = filterDust(trajectoryData,0.1,5);
