@@ -23,7 +23,7 @@ framesFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
 areaFilter = filterArea(trajectoryData,25,1500,50,50,hasSkel&framesFilter);
 
 % select worms with at least a certain speed
-speedFilter = filterSpeed(trajectoryData,0.1,hasSkel&framesFilter&areaFilter);
+speedFilter = filterSpeed(trajectoryData,0.1,verbose,hasSkel&framesFilter&areaFilter);
 
 % detect dust from manually labelled data
 dustIdcs = filterDust(trajectoryData,0.1,5);
