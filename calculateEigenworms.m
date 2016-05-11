@@ -8,10 +8,10 @@ exportOptions = struct('Color','rgb');
 nFrames = 450000;
 
 % select data set by strain - N2, HW, NP
-for strain = {'N2'}%, 'HW', 'NP'}
+for strain = {'HW', 'NP', 'N2'}
     S = strain{:};
     % select data set by number of worms - 1, 5, 15, 25, 40
-    for N = 40%[1 5 15 25 40]
+    for N = [1 5 15 25 40]
         close all
         
         % load file name descriptor - taken from Camille's Recording_LOG.xls
@@ -55,13 +55,10 @@ for strain = {'N2'}%, 'HW', 'NP'}
             % randomly pick nFrames from the data, to not oversample
             % from correlated frames
             if nSkeleta >= nFrames
-                frameIDs = randi(nSkeleta,1,nFrames);
-            else
-                frameIDs = 1:nSkeleta; % if not enough frames exist, just take all there are
+                angleArray = datasample(angleArray,nFrames,'Replace','false');
+            % if not enough frames exist, just take all there are
             end
-            
-            angleArray = angleArray(frameIDs,:);
-            
+                        
             % find eigenworms
             showPlots = 1;
             nEigenworms = 6;
@@ -77,7 +74,7 @@ for strain = {'N2'}%, 'HW', 'NP'}
                 figSuffix = {'var','eig','cov'};
                 for figCtr = 1:3
                     set(figure(figCtr),'name',[figName '_' figSuffix{figCtr} ...
-                        '_' num2str(nDatasets) 'datasets_' num2str(length(frameIDs),2) 'frames'])
+                        '_' num2str(nDatasets) 'datasets_' num2str(size(angleArray,1),2) 'frames'])
                     figFileName = ['figures/' figName '_' figSuffix{figCtr} '.eps'];
                     exportfig(figure(figCtr),figFileName,exportOptions)
                     system(['epstopdf ' figFileName]);

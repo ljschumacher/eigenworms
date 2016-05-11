@@ -3,10 +3,7 @@ function out = filterData(filename,verbose)
 % some filtering is hierarchical, meaning that the first few filters will 
 % reduce the number of data to pass through the next filter
 
-% issues/to-do:
-% - should we only load data patches of a minimum contiguous length? (after
-% having already filtered for how many frames a worm appears in, which can
-% be reduced by other filters)
+minLength = 25*30;
 
 % load all metadata
 trajectoryData = h5read(filename,'/trajectories_data');
@@ -16,7 +13,7 @@ hasSkel = trajectoryData.has_skeleton==1;
 
 % select frames with worms that occurr more than a certain number
 framesPerWorm = histcounts(trajectoryData.worm_index_joined,max(trajectoryData.worm_index_joined));
-frequentWorms = find(framesPerWorm>=25*10);
+frequentWorms = find(framesPerWorm>=minLength);
 framesFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
 
 % select frames with a certain area
@@ -35,7 +32,7 @@ startIndcs = find(dF==1); % pick out start of contiguous data regions
 stopIndcs = find(dF==-1) - 1; % pick out stop of contiguous data regions
 
 % load skeletal data
-skelData = loadSkeleta(filename,startIndcs,stopIndcs,verbose);
+skelData = loadSkeleta(filename,startIndcs,stopIndcs,minLength,verbose);
 
 % filter data
 out = skelData;
