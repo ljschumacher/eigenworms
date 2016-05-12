@@ -55,7 +55,7 @@ for strain = {'HW', 'NP', 'N2'}
             % randomly pick nFrames from the data, to not oversample
             % from correlated frames
             if nSkeleta >= nFrames
-                angleArray = datasample(angleArray,nFrames,'Replace','false');
+                angleArray = datasample(angleArray,nFrames,'Replace',false);
             % if not enough frames exist, just take all there are
             end
                         
