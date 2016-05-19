@@ -1,7 +1,7 @@
 % combine projected amplitudes in space of first two eigenworms
 
 % issues/to-do:
-% - should we normalise the variance of each projection to 1, as in the
+% - why should we normalise the variance of each projection to 1, as in the
 % original eigenworm paper?
 close all
 clear

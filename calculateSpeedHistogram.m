@@ -34,29 +34,29 @@ for strain = {'N2', 'HW', 'NP'}
             for dsCtr=1:nDatasets
                 filename = datasets{dsCtr};
                 % load trajectory data
-                trajData = h5read(filename,'/trajectories_data');
-                hasSkel = trajData.has_skeleton==1;
-                framesPerWorm = histcounts(trajData.worm_index_joined,max(trajData.worm_index_joined));
+                trajectoryData = h5read(filename,'/trajectories_data');
+                hasSkel = trajectoryData.has_skeleton==1;
+                framesPerWorm = histcounts(trajectoryData.worm_index_joined,max(trajectoryData.worm_index_joined));
                 frequentWorms = find(framesPerWorm>=250);
-                framesFilter = ismember(trajData.worm_index_joined,frequentWorms);
+                framesFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
                 % select frames with a certain area
                 dABin = 25;
                 Abins = 0:dABin:1500;
-                counts = histcounts(trajData.area(hasSkel&framesFilter),Abins,'normalization','pdf');
+                counts = histcounts(trajectoryData.area(hasSkel&framesFilter),Abins,'normalization','pdf');
                 [~, locs, widths, proms] = findpeaks(counts,Abins(2:end)-dABin/2,...
                     'MinPeakDistance',50,'MinPeakWidth',50);
                 [~, mostProm] = max(proms); % find most prominent peak
-                areaFilter = trajData.area>=(locs(mostProm) - widths(mostProm))&...
-                    trajData.area<=(locs(mostProm) + widths(mostProm));
+                areaFilter = trajectoryData.area>=(locs(mostProm) - widths(mostProm))&...
+                    trajectoryData.area<=(locs(mostProm) + widths(mostProm));
                 % find individual worm trajectories
-                wormIDs = unique(trajData.worm_index_joined(hasSkel&framesFilter&areaFilter))';
+                wormIDs = unique(trajectoryData.worm_index_joined(hasSkel&framesFilter&areaFilter))';
                 figure, hold on
                 % go through worms and calculate speeds
                 for wormCtr=wormIDs
-                    wormIdcs = trajData.worm_index_joined==wormCtr;
-                    wormDx = diff(trajData.coord_x(wormIdcs));
-                    wormDy = diff(trajData.coord_y(wormIdcs));
-                    wormDf = diff(trajData.frame_number(wormIdcs));
+                    wormIdcs = trajectoryData.worm_index_joined==wormCtr;
+                    wormDx = diff(trajectoryData.coord_x(wormIdcs));
+                    wormDy = diff(trajectoryData.coord_y(wormIdcs));
+                    wormDf = diff(trajectoryData.frame_number(wormIdcs));
                     wormDisplacement = sqrt(wormDx.^2 + wormDy.^2)./single(wormDf);
                     histogram(wormDisplacement,bins)
                     % if isfield(trajData,'worm_label')

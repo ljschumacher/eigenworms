@@ -19,17 +19,18 @@ framesFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
 % select frames with a certain area
 areaFilter = filterArea(trajectoryData,25,1500,50,50,hasSkel&framesFilter);
 
-% select worms with at least a certain speed
-speedFilter = filterSpeed(trajectoryData,0.1,verbose,hasSkel&framesFilter&areaFilter);
-
 % detect dust from manually labelled data
 dustIdcs = filterDust(trajectoryData,0.1,5);
 
+% select worms with at least a certain speed
+speedFilter = filterSpeed(trajectoryData,0.1,verbose,...
+    hasSkel&framesFilter&areaFilter&~dustIdcs);
+
 % combine filters and select data regions to load
 combiFilter = hasSkel&areaFilter&framesFilter&speedFilter&~dustIdcs;
-dF = diff([0; combiFilter; 0]);
-startIndcs = find(dF==1); % pick out start of contiguous data regions
-stopIndcs = find(dF==-1) - 1; % pick out stop of contiguous data regions
+dFrame = diff([0; combiFilter; 0]);
+startIndcs = find(dFrame==1); % pick out start of contiguous data regions
+stopIndcs = find(dFrame==-1) - 1; % pick out stop of contiguous data regions
 
 % load skeletal data
 skelData = loadSkeleta(filename,startIndcs,stopIndcs,minLength,verbose);

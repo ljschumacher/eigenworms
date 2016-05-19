@@ -7,7 +7,7 @@ wormIDs = unique(trajectoryData.worm_index_joined(otherFilters))';
 wormMoving = false(size(wormIDs));
 for wormCtr=1:length(wormIDs) % go through worms and calculate speeds
     if verbose
-        display(['calculating speed for worm ' num2str(wormCtr) ...
+        display(['calculating speed for worm-frame ' num2str(wormCtr) ...
             ' out of ' num2str(length(wormIDs))])
     end
     wormIdcs = trajectoryData.worm_index_joined==wormIDs(wormCtr);
