@@ -38,18 +38,18 @@ for strain = {'N2', 'HW', 'NP'}
                 hasSkel = trajectoryData.has_skeleton==1;
                 framesPerWorm = histcounts(trajectoryData.worm_index_joined,max(trajectoryData.worm_index_joined));
                 frequentWorms = find(framesPerWorm>=250);
-                framesFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
+                frequentFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
                 % select frames with a certain area
                 dABin = 25;
                 Abins = 0:dABin:1500;
-                counts = histcounts(trajectoryData.area(hasSkel&framesFilter),Abins,'normalization','pdf');
+                counts = histcounts(trajectoryData.area(hasSkel&frequentFilter),Abins,'normalization','pdf');
                 [~, locs, widths, proms] = findpeaks(counts,Abins(2:end)-dABin/2,...
                     'MinPeakDistance',50,'MinPeakWidth',50);
                 [~, mostProm] = max(proms); % find most prominent peak
                 areaFilter = trajectoryData.area>=(locs(mostProm) - widths(mostProm))&...
                     trajectoryData.area<=(locs(mostProm) + widths(mostProm));
                 % find individual worm trajectories
-                wormIDs = unique(trajectoryData.worm_index_joined(hasSkel&framesFilter&areaFilter))';
+                wormIDs = unique(trajectoryData.worm_index_joined(hasSkel&frequentFilter&areaFilter))';
                 figure, hold on
                 % go through worms and calculate speeds
                 for wormCtr=wormIDs
@@ -60,7 +60,7 @@ for strain = {'N2', 'HW', 'NP'}
                     wormDisplacement = sqrt(wormDx.^2 + wormDy.^2)./single(wormDf);
                     histogram(wormDisplacement,bins)
                     % if isfield(trajData,'worm_label')
-                    %                 wormLabels = unique(trajData.worm_label(hasSkel&framesFilter&areaFilter))';
+                    %                 wormLabels = unique(trajData.worm_label(hasSkel&frequentFilter&areaFilter))';
                     %                 figure, hold on
                     %                 % go through worms and calculate speeds
                     %                 for wormLbl=wormLabels
@@ -75,6 +75,7 @@ for strain = {'N2', 'HW', 'NP'}
                     title([S ' N=' num2str(N)])
                     set(gcf,'name',filename)
                 end
+                pause(0.001)
             end
         else
             display(['No datasets found for strain=' S ', worms=' num2str(N) ])

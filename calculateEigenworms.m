@@ -40,7 +40,7 @@ for strain = {'HW', 'NP', 'N2'}
             for dsCtr=1:nDatasets
                 filename = datasets{dsCtr};
                 % load skeleton data in chunks of nFrames
-                skeleta{dsCtr} = filterData(filename,1);
+                skeleta{dsCtr} = filterData(filename,1,1);
                 skeletaSizes(dsCtr) = size(skeleta{dsCtr},3);
             end
             
