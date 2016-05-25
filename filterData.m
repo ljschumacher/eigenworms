@@ -3,7 +3,11 @@ function out = filterData(filename,verbose,plotDiagnostics)
 % some filtering is hierarchical, meaning that the first few filters will 
 % reduce the number of data to pass through the next filter
 
-minLength = 25*30;
+minFrames = 25*30;
+
+if verbose
+    display(['now filtering dataset ' filename(end-42:end-5)])
+end
 
 % load all metadata
 trajectoryData = h5read(filename,'/trajectories_data');
@@ -13,11 +17,11 @@ hasSkel = trajectoryData.has_skeleton==1;
 
 % select frames with worms that occurr more than a certain number
 framesPerWorm = histcounts(trajectoryData.worm_index_joined,max(trajectoryData.worm_index_joined));
-frequentWorms = find(framesPerWorm>=minLength);
+frequentWorms = find(framesPerWorm>=minFrames);
 frequentFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
 
 % select frames with a certain area
-areaFilter = filterArea(trajectoryData,25,1500,50,50,hasSkel&frequentFilter,...
+areaFilter = filterArea(trajectoryData,30,50,hasSkel&frequentFilter,...
     plotDiagnostics,filename);
 
 % detect dust from manually labelled data
@@ -37,7 +41,7 @@ if plotDiagnostics
     plotWormNumbers(filename,trajectoryData,combiFilter)
 end
 % load skeletal data
-skelData = loadSkeleta(filename,startIndcs,stopIndcs,minLength,verbose);
+skelData = loadSkeleta(filename,startIndcs,stopIndcs,minFrames,verbose);
 
 % filter data
 out = skelData;

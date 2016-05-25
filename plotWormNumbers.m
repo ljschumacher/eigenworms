@@ -20,6 +20,7 @@ xlabel('frame number')
 ylabel('object count')
 legend('raw','filtered')
 xlim([0 max(frameNums)])
+title(filename(end-42:end-15),'Interpreter','none')
 % save plot
 figName = ['figures/diagnostics/wormNums_dataset_' filename(end-42:end-15) '.eps'];
 exportfig(gcf,figName,exportOptions)

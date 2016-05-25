@@ -10,8 +10,8 @@ for wormCtr=1:length(wormIDs) % go through worms and calculate speeds
         display(['calculating speed for tracked object ' num2str(wormCtr) ...
             ' out of ' num2str(length(wormIDs))])
     end
-    % find all frames the current form is in, excluding previously filtered
-    % frames to improve performance
+    % find all frames the current worm is in, excluding previously filtered
+    % frames to improve performance (hopefully)
     wormIdcs = trajectoryData.worm_index_joined==wormIDs(wormCtr)&otherFilters;
     wormDx = diff(trajectoryData.coord_x(wormIdcs));
     wormDy = diff(trajectoryData.coord_y(wormIdcs));
