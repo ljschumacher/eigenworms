@@ -11,7 +11,7 @@ end
 
 if plotDiagnostics
     areaHistFig = figure;
-    h = histogram(trajectoryData.area(otherFilters),'normalization','pdf',...
+    h = histogram(trajectoryData.area(otherFilters),'BinMethod','sqrt','normalization','pdf',...
         'EdgeColor','none');
     hold on
     [peaks, locs, widths, proms] = findpeaks(h.Values,double(h.BinEdges(2:end)-h.BinWidth/2),...
@@ -21,13 +21,12 @@ if plotDiagnostics
     plot(locs(mostProm),peaks(mostProm),'ro','LineWidth',2,'MarkerSize',20)
     stairs([locs - widths; locs - widths; locs + widths],...
         [0; 1; 0]*peaks,'LineWidth',2)
-    xlim([0 1500])
-    xlabel('area of tracked opbject')
+    xlabel('area of tracked object')
     ylabel('pdf')
     title(filename(end-42:end-15),'Interpreter','none')
     % save plot
     figName = ['figures/diagnostics/areaHist_dataset_' filename(end-42:end-15) '.eps'];
-    exportfig(gcf,figName,'Color','rgb')
+    exportfig(gcf,figName,'Color','rgb','LockAxes',0); % lock axes 0 is important for keeping 10^x axes labels
     system(['epstopdf ' figName]);
     % clean up
     system(['rm ' figName]);

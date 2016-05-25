@@ -8,7 +8,7 @@ exportOptions = struct('Color','rgb');
 nFrames = 450000;
 
 % select data set by strain - N2, HW, NP
-for strain = {'NP','N2', 'HW'}
+for strain = {'N2', 'HW', 'NP'}
     S = strain{:};
     % select data set by number of worms - 1, 5, 15, 25, 40
     for N = [40 25 15 5 1]
