@@ -8,10 +8,10 @@ exportOptions = struct('Color','rgb');
 nFrames = 450000;
 
 % select data set by strain - N2, HW, NP
-for strain = {'N2', 'HW', 'NP'}
+for strain = {'NP', 'HW', 'N2'}
     S = strain{:};
     % select data set by number of worms - 1, 5, 15, 25, 40
-    for N = [40 25 15 5 1]
+    for N = [1 5 15 25 40]
         close all
         
         % load file name descriptor - taken from Camille's Recording_LOG.xls

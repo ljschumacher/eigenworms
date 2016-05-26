@@ -11,7 +11,14 @@ end
 
 if plotDiagnostics
     areaHistFig = figure;
-    h = histogram(trajectoryData.area(otherFilters),'BinMethod','sqrt','normalization','pdf',...
+    % check that bins won't be smaller than 1, which doesn't make sense for
+    % size in units of pixels
+    if 1>range(trajectoryData.area(otherFilters))/ceil(sqrt(numel(trajectoryData.area(otherFilters))))
+        binMethod = 'integers';
+    else
+        binMethod = 'sqrt';
+    end
+    h = histogram(trajectoryData.area(otherFilters),'BinMethod',binMethod,'normalization','pdf',...
         'EdgeColor','none');
     hold on
     [peaks, locs, widths, proms] = findpeaks(h.Values,double(h.BinEdges(2:end)-h.BinWidth/2),...
@@ -23,6 +30,7 @@ if plotDiagnostics
         [0; 1; 0]*peaks,'LineWidth',2)
     xlabel('area of tracked object')
     ylabel('pdf')
+    xlim([0 1500])
     title(filename(end-42:end-15),'Interpreter','none')
     % save plot
     figName = ['figures/diagnostics/areaHist_dataset_' filename(end-42:end-15) '.eps'];
