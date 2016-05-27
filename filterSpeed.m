@@ -4,7 +4,7 @@ if nargin<4
     otherFilters = true(size(trajectoryData.has_skeleton));
 end
 wormIDs = unique(trajectoryData.worm_index_joined(otherFilters))';
-wormMoving = false(size(wormIDs));
+movingIdcs = false(size(trajectoryData.frame_number)); % initialise all frames as excluded
 for wormCtr=1:length(wormIDs) % go through worms and calculate speeds
     if verbose
         display(['calculating speed for tracked object ' num2str(wormCtr) ...
@@ -17,7 +17,5 @@ for wormCtr=1:length(wormIDs) % go through worms and calculate speeds
     wormDy = diff(trajectoryData.coord_y(wormIdcs));
     wormDf = diff(trajectoryData.frame_number(wormIdcs));
     wormDisplacement = sqrt(wormDx.^2 + wormDy.^2)./single(wormDf);
-    wormMoving(wormCtr) = any(wormDisplacement>speedThreshold);
+    movingIdcs(wormDisplacement>speedThreshold) = 1; % include worm-frames were movement is above threshold
 end
-movingWorms = wormIDs(wormMoving);
-movingIdcs = ismember(trajectoryData.worm_index_joined,movingWorms);

@@ -13,13 +13,13 @@ if plotDiagnostics
     areaHistFig = figure;
     % check that bins won't be smaller than 1, which doesn't make sense for
     % size in units of pixels
-    if 1>range(trajectoryData.area(otherFilters))/ceil(sqrt(numel(trajectoryData.area(otherFilters))))
-        binMethod = 'integers';
+    if 3>range(trajectoryData.area(otherFilters))/ceil(sqrt(numel(trajectoryData.area(otherFilters))))
+        h = histogram(trajectoryData.area(otherFilters),'BinWidth',3,'normalization','pdf',...
+            'EdgeColor','none');
     else
-        binMethod = 'sqrt';
+        h = histogram(trajectoryData.area(otherFilters),'BinMethod','sqrt','normalization','pdf',...
+            'EdgeColor','none');
     end
-    h = histogram(trajectoryData.area(otherFilters),'BinMethod',binMethod,'normalization','pdf',...
-        'EdgeColor','none');
     hold on
     [peaks, locs, widths, proms] = findpeaks(h.Values,double(h.BinEdges(2:end)-h.BinWidth/2),...
         'MinPeakDistance',minPeakDistance,'MinPeakWidth',max(minPeakWidth,2*h.BinWidth));
@@ -40,8 +40,15 @@ if plotDiagnostics
     system(['rm ' figName]);
     close(areaHistFig)
 else
-    [counts, bins] = histcounts(trajectoryData.area(otherFilters),'normalization','pdf');
-    binWidth = mean(diff(bins));
+    if 3>range(trajectoryData.area(otherFilters))/ceil(sqrt(numel(trajectoryData.area(otherFilters))))
+        binWidth = 3;
+        [counts, bins] = histcounts(trajectoryData.area(otherFilters),...
+            'BinWidth',binWidth,'normalization','pdf');
+    else
+        [counts, bins] = histcounts(trajectoryData.area(otherFilters),...
+            'BinMethod','sqrt','normalization','pdf');
+        binWidth = mean(diff(bins));
+    end
     [~, locs, widths, proms] = findpeaks(counts,double(bins(2:end)-binWidth/2),...
         'MinPeakDistance',minPeakDistance,'MinPeakWidth',max(minPeakWidth,2*binWidth));
     [~, mostProm] = max(proms); % find most prominent peak

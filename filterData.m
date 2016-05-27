@@ -21,7 +21,7 @@ frequentWorms = find(framesPerWorm>=minFrames);
 frequentFilter = ismember(trajectoryData.worm_index_joined,frequentWorms);
 
 % select frames with a certain area
-areaFilter = filterArea(trajectoryData,30,50,hasSkel&frequentFilter,...
+areaFilter = filterArea(trajectoryData,20,50,hasSkel&frequentFilter,...
     plotDiagnostics,filename);
 
 % detect dust from manually labelled data
