@@ -7,6 +7,10 @@ exportOptions = struct('Color','rgb');
 % strain and worm number
 nFrames = 450000;
 
+% load master eigenworms for projections
+load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
+masterWorms = eigenWorms;
+
 % select data set by strain - N2, HW, NP
 for strain = {'NP', 'HW', 'N2'}
     S = strain{:};
@@ -64,10 +68,10 @@ for strain = {'NP', 'HW', 'N2'}
             nEigenworms = 6;
             [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
             eigenProjections = projectOnEigenWormsV(eigenWorms, angleArray, nEigenworms);
-            
+            masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
             % save eigenWorms, eigenVals and first few projections
             save(['results/' S '_' num2str(N) 'worms_eigenData.mat'],'eigenWorms',...
-                'eigenVals','eigenProjections','nDatasets','nFrames')
+                'masterWorms','eigenVals','eigenProjections','nDatasets','nFrames')
             if showPlots
                 % save plots
                 figName = [S '_' num2str(N) 'worms'];

@@ -15,7 +15,8 @@ hold on
 combiFilter = filter&framesFilter;
 % plot post-filtered worm numbers
 filteredFrameNums = unique(trajectoryData.frame_number(combiFilter))';
-histogram(trajectoryData.frame_number(combiFilter),filteredFrameNums,'DisplayStyle','stairs')
+[wormNums, wormBins] = histcounts(trajectoryData.frame_number(combiFilter),filteredFrameNums);
+stairs(wormBins(1:end-1),wormNums); % don't use histogram again to make it parfor compatible
 xlabel('frame number')
 ylabel('object count')
 legend('raw','filtered')

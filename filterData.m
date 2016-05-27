@@ -29,7 +29,7 @@ dustIdcs = filterDust(trajectoryData,0.1,5);
 
 % select worms with at least a certain speed
 speedFilter = filterSpeed(trajectoryData,0.1,verbose,...
-    hasSkel&frequentFilter&areaFilter&~dustIdcs);
+    hasSkel&frequentFilter&areaFilter&~dustIdcs,plotDiagnostics,filename);
 
 % combine filters and select data regions to load
 combiFilter = hasSkel&areaFilter&frequentFilter&speedFilter&~dustIdcs;
