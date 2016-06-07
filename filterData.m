@@ -1,6 +1,6 @@
-function out = filterData(filename,verbose,plotDiagnostics)
+function [skelData, varargout] = filterData(filename,verbose,plotDiagnostics)
 % filter worm skeletal data by area, observed time, etc.
-% some filtering is hierarchical, meaning that the first few filters will 
+% some filtering is hierarchical, meaning that the first few filters will
 % reduce the number of data to pass through the next filter
 
 minFrames = 25*30;
@@ -40,9 +40,13 @@ stopIndcs = find(dFrame==-1) - 1; % pick out stop of contiguous data regions
 if plotDiagnostics
     plotWormNumbers(filename,trajectoryData,combiFilter)
 end
-% load skeletal data
-skelData = loadSkeleta(filename,startIndcs,stopIndcs,minFrames,verbose);
-
-% filter data
-out = skelData;
+% load  (filtered) skeletal data
+switch nargout
+    case 1
+        skelData = loadSkeleta(filename,startIndcs,stopIndcs,minFrames,verbose);
+    case 2
+        [skelData, varargout{1}] = loadSkeleta(filename,startIndcs,stopIndcs,minFrames,verbose);
+    case 3
+        [skelData, varargout{1}, varargout{2}] = loadSkeleta(filename,startIndcs,stopIndcs,minFrames,verbose);
+end
 end

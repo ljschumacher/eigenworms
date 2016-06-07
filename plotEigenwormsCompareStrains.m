@@ -11,7 +11,7 @@ clear
 exportOptions = struct('Color','rgb');
 
 nEigenworms = 6;
-for N = [25 40]
+for N = [1 5 15 25 40]
     strains = {'N2', 'HW', 'NP'};
     
     eigWormFig = figure;

@@ -13,10 +13,14 @@ histogram(trajectoryData.frame_number(framesFilter),frameNums,'DisplayStyle','st
 hold on
 % combine filters
 combiFilter = filter&framesFilter;
-% plot post-filtered worm numbers
-filteredFrameNums = unique(trajectoryData.frame_number(combiFilter))';
-[wormNums, wormBins] = histcounts(trajectoryData.frame_number(combiFilter),filteredFrameNums);
-stairs(wormBins(1:end-1),wormNums); % don't use histogram again to make it parfor compatible
+if nnz(combiFilter)
+    % plot post-filtered worm numbers
+    filteredFrameNums = unique(trajectoryData.frame_number(combiFilter))';
+    [wormNums, wormBins] = histcounts(trajectoryData.frame_number(combiFilter),filteredFrameNums);
+    stairs(wormBins(1:end-1),wormNums); % don't use histogram again to make it parfor compatible
+else
+    display('We filtered out all the worms! :(')
+end
 xlabel('frame number')
 ylabel('object count')
 legend('raw','filtered')

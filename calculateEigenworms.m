@@ -26,7 +26,7 @@ for strain = {'NP', 'HW', 'N2'}
         datasets = {};
         for fileCtr=1:nFiles
             % find full path to folder
-            file = rdir(['/data1/linus/Recordings/Results/*/' ...
+            file = rdir(['/datafast/linus/Recordings/Results/*/' ...
                 filenames{fileCtr}(1:end-5) '_skeletons.hdf5']);
             if ~isempty(file)
                 datasets{dsCtr} = file.name;
@@ -41,7 +41,7 @@ for strain = {'NP', 'HW', 'N2'}
             skeleta = cell(nDatasets,1);
             skeletaSizes = NaN(nDatasets,1);
             
-            for dsCtr=1:nDatasets
+            parfor dsCtr=1:nDatasets
                 filename = datasets{dsCtr};
                 % load skeleton data in chunks of nFrames
                 skeleta{dsCtr} = filterData(filename,1,1);
@@ -59,7 +59,7 @@ for strain = {'NP', 'HW', 'N2'}
             % randomly pick nFrames from the data, to not oversample
             % from correlated frames
             if nSkeleta >= nFrames
-                angleArray = datasample(angleArray,nFrames,'Replace',false);
+                [angleArray, sampleIDs] = datasample(angleArray,nFrames,'Replace',false);
             % if not enough frames exist, just take all there are
             end
                         
@@ -71,7 +71,7 @@ for strain = {'NP', 'HW', 'N2'}
             masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
             % save eigenWorms, eigenVals and first few projections
             save(['results/' S '_' num2str(N) 'worms_eigenData.mat'],'eigenWorms',...
-                'masterWorms','eigenVals','eigenProjections','nDatasets','nFrames')
+                'eigenVals','eigenProjections','masterProjections','nDatasets','nFrames')
             if showPlots
                 % save plots
                 figName = [S '_' num2str(N) 'worms'];

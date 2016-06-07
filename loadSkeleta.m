@@ -1,4 +1,4 @@
-function skelData = loadSkeleta(filename,startIndcs,stopIndcs,minLength,verbose)
+function [skelData, varargout] = loadSkeleta(filename,startIndcs,stopIndcs,minLength,verbose)
 % go through data set, load data in chunks, and assemble full skeleton
 % array from that
 if nargin<4
@@ -23,8 +23,17 @@ if minLength>1
 end
 
 numRegions = length(startIndcs);
-skelData = NaN(2,49,sum(regionSizes));
+numData = sum(regionSizes);
+skelData = NaN(2,49,numData);
 skelDataIndcs = cumsum([1; regionSizes]);
+if nargout > 1
+    % load meta data
+    trajectoryData = h5read(filename,'/trajectories_data');
+    wormIDs = NaN(numData,1);
+    if nargout > 2
+        frameIDS = NaN(numData,1);
+    end
+end
 
 for regCtr = 1:numRegions
     % set frame up to which to read, or end of data set
@@ -38,4 +47,19 @@ for regCtr = 1:numRegions
     skelData(:,:,skelDataIndcs(regCtr):(skelDataIndcs(regCtr + 1) - 1)) =...
         h5read(filename,'/skeleton',[1 1 fromFrame],...
         [2, 49, regionSizes(regCtr)]);
+    if nargout > 1
+        wormIDs(skelDataIndcs(regCtr):(skelDataIndcs(regCtr + 1) - 1)) = ...
+            trajectoryData.worm_index_joined(fromFrame:upToFrame);
+        if nargout > 2
+            frameIDs(skelDataIndcs(regCtr):(skelDataIndcs(regCtr + 1) - 1)) = ...
+                trajectoryData.frame_number(fromFrame:upToFrame);
+        end
+    end
+end
+
+if nargout > 1
+    varargout{1} = wormIDs;
+    if nargout > 2
+       varargout{2} = frameIDs; 
+    end
 end

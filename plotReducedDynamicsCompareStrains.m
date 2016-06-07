@@ -22,11 +22,11 @@ for N = [1 5 15 25 40]
         if ~isempty(file)
             eigProjectionFig = figure;
             % load eigenworm analysis result
-            load(file.name)
+            load(file.name,'masterProjections')
             % normalise to unit variance
-            eigenProjections = zscore(eigenProjections);
+            masterProjections = zscore(masterProjections);
             % plot projected amplitudes
-            [~, subAx, bigAx, ~, diagAx] = hplotmatrix(eigenProjections(:,1:nComponents));
+            [~, subAx, bigAx, ~, diagAx] = hplotmatrix(masterProjections(:,1:nComponents));
             for cmpCtr = 1:nComponents
                 subAx(cmpCtr).YLabel.String = ['a_' num2str(cmpCtr)];
                 subAx(cmpCtr*nComponents).XLabel.String = ['a_' num2str(cmpCtr)];
@@ -37,7 +37,7 @@ for N = [1 5 15 25 40]
                 end
             end
             bigAx.Title.String = ['strain ' S ', N = ' num2str(N) ' worms, '...
-                num2str(size(eigenProjections,1)/25/3600,2) ' worm-hours'];
+                num2str(size(masterProjections,1)/25/3600,2) ' worm-hours'];
             % annotate and save figure
             set(eigProjectionFig, 'name', ['projected amplitudes for N=' num2str(N) ' worms'])
             figName = ['figures/' S '_' num2str(N) 'worms_projections.eps'];
