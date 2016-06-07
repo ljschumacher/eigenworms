@@ -39,28 +39,40 @@ for strain = {'NP', 'HW', 'N2'}
             
             % allocate variables
             skeleta = cell(nDatasets,1);
+            wormIDs = cell(nDatasets,1);
+            frameIDs = cell(nDatasets,1);
             skeletaSizes = NaN(nDatasets,1);
             
             parfor dsCtr=1:nDatasets
                 filename = datasets{dsCtr};
                 % load skeleton data in chunks of nFrames
-                skeleta{dsCtr} = filterData(filename,1,1);
+                [skeleta{dsCtr}, wormIDs{dsCtr}, frameIDs{dsCtr}] = filterData(filename,1,1);
                 skeletaSizes(dsCtr) = size(skeleta{dsCtr},3);
             end
             
             nSkeleta = sum(skeletaSizes);
             angleArray = NaN(nSkeleta,48);
+            wormIDarray = int32(zeros(nSkeleta,1,'single'));
+            frameIDarray = int32(zeros(nSkeleta,1,'single'));
             for dsCtr=1:nDatasets
                 % create angle arrays from skeleta
                 [angleArray(sum(skeletaSizes(1:(dsCtr - 1))) + (1:skeletaSizes(dsCtr)),:), ~] = ...
                     makeAngleArrayV(squeeze(skeleta{dsCtr}(1,:,:))',squeeze(skeleta{dsCtr}(2,:,:))');
+                % to avoid duplicating worm and frame IDs, pre-append data
+                % set number multiplied with next highest order of mag
+                wormIDarray(sum(skeletaSizes(1:(dsCtr - 1))) + (1:skeletaSizes(dsCtr)),:) = ...
+                    int32(dsCtr*10^ceil(log10(nSkeleta))) + wormIDs{dsCtr};
+                frameIDarray(sum(skeletaSizes(1:(dsCtr - 1))) + (1:skeletaSizes(dsCtr)),:) = ...
+                    int32(dsCtr*10^ceil(log10(nSkeleta))) + frameIDs{dsCtr};
             end
             
             % randomly pick nFrames from the data, to not oversample
             % from correlated frames
             if nSkeleta >= nFrames
                 [angleArray, sampleIDs] = datasample(angleArray,nFrames,'Replace',false);
-            % if not enough frames exist, just take all there are
+                wormIDarray = wormIDarray(sampleIDs);
+                frameIDarray = frameIDarray(sampleIDs);
+                % if not enough frames exist, just take all there are
             end
                         
             % find eigenworms
@@ -71,7 +83,8 @@ for strain = {'NP', 'HW', 'N2'}
             masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
             % save eigenWorms, eigenVals and first few projections
             save(['results/' S '_' num2str(N) 'worms_eigenData.mat'],'eigenWorms',...
-                'eigenVals','eigenProjections','masterProjections','nDatasets','nFrames')
+                'eigenVals','eigenProjections','masterProjections','nDatasets',...
+                'nFrames','wormIDarray','frameIDarray')
             if showPlots
                 % save plots
                 figName = [S '_' num2str(N) 'worms'];

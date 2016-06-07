@@ -41,7 +41,7 @@ end
 if plotDiagnostics % plot speed distribitions
     speedHistFig = figure;
     % fourth element of color vector sets transparancy
-    plot(bins(1:end-1)+dBin/2,speedDistributions','Color',[0 0 1 1/nWorms])
+    plot(bins(1:end-1)+dBin/2,speedDistributions','Color',[0 0 1 1/(1 + log10(nWorms))])
     hold on
     plot([speedThreshold, speedThreshold], [0, max(max(speedDistributions))],...
         'k--','LineWidth',2)

@@ -29,9 +29,9 @@ skelDataIndcs = cumsum([1; regionSizes]);
 if nargout > 1
     % load meta data
     trajectoryData = h5read(filename,'/trajectories_data');
-    wormIDs = NaN(numData,1);
+    wormIDs = int32(zeros(numData,1));
     if nargout > 2
-        frameIDS = NaN(numData,1);
+        frameIDs = int32(zeros(numData,1));
     end
 end
 
