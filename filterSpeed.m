@@ -41,12 +41,14 @@ end
 if plotDiagnostics % plot speed distribitions
     speedHistFig = figure;
     % fourth element of color vector sets transparancy
-    plot(bins(1:end-1)+dBin/2,speedDistributions','Color',[0 0 1 1/(1 + log10(nWorms))])
+    plot(bins(1:end-1)+dBin/2,speedDistributions')
     hold on
-    plot([speedThreshold, speedThreshold], [0, max(max(speedDistributions))],...
+    ymax = max(max(speedDistributions));
+    plot([speedThreshold, speedThreshold], [0, ymax],...
         'k--','LineWidth',2)
     title(filename(end-42:end-15),'Interpreter','none')
     ylabel('pdf'), xlabel('speed (pixel/frame)')
+    ylim([0 ymax])
     % save plot
     figName = ['figures/diagnostics/speedHist_dataset_' filename(end-42:end-15) '.eps'];
     exportfig(gcf,figName,'Color','rgb');

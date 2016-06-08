@@ -45,7 +45,7 @@ for N = [1 5 15 25 40]
             system(['epstopdf ' figName]);
             system(['rm ' figName]);
             %             close(eigProjectionFig)
-            clear eigenProjections
+            clear eigenProjections masterProjections
         else
             display(['No data for strain=' S ', worms=' num2str(N)])
         end

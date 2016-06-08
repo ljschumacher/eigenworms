@@ -12,7 +12,7 @@ load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
 % select data set by strain - N2, HW, NP
-for strain = {'NP', 'HW', 'N2'}
+for strain = {'N2', 'HW', 'NP'}
     S = strain{:};
     % select data set by number of worms - 1, 5, 15, 25, 40
     for N = [1 5 15 25 40]
@@ -66,6 +66,8 @@ for strain = {'NP', 'HW', 'N2'}
                     int32(dsCtr*10^ceil(log10(nSkeleta))) + frameIDs{dsCtr};
             end
             
+            plotShapeCorrelations(angleArray,wormIDarray,frameIDarray,250,['figures/diagnostics/' S '_' num2str(N) 'worms_'])
+
             % randomly pick nFrames from the data, to not oversample
             % from correlated frames
             if nSkeleta >= nFrames
