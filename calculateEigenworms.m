@@ -11,6 +11,9 @@ nFrames = 450000;
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
+showPlots = 1;
+nEigenworms = 6;
+            
 % select data set by strain - N2, HW, NP
 for strain = {'N2', 'HW', 'NP'}
     S = strain{:};
@@ -66,7 +69,12 @@ for strain = {'N2', 'HW', 'NP'}
                     int32(dsCtr*10^ceil(log10(nSkeleta))) + frameIDs{dsCtr};
             end
             
-            plotShapeCorrelations(angleArray,wormIDarray,frameIDarray,250,['figures/diagnostics/' S '_' num2str(N) 'worms_'])
+            display('Calculating shape correlations...')
+            plotShapeCorrelations(angleArray,wormIDarray,frameIDarray,250,...
+                ['figures/diagnostics/' S '_' num2str(N) 'worms_'],0)
+            masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
+            plotShapeCorrelations(masterProjections,wormIDarray,frameIDarray,250,...
+                ['figures/diagnostics/' S '_' num2str(N) 'worms_eigenProj_'],1)
 
             % randomly pick nFrames from the data, to not oversample
             % from correlated frames
@@ -78,8 +86,6 @@ for strain = {'N2', 'HW', 'NP'}
             end
                         
             % find eigenworms
-            showPlots = 1;
-            nEigenworms = 6;
             [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
             eigenProjections = projectOnEigenWormsV(eigenWorms, angleArray, nEigenworms);
             masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
