@@ -17,6 +17,8 @@ plotColors= lines(nWormNumbers);
 
 % for reference, eigenworms from Brown et al. 2013
 reference = load('../Motif_Analysis/eigenWorms.mat');
+% change the order of first and third masterworm to match ours
+reference.eigenWorms = reference.eigenWorms([3 2 1 4:end], :);
 
 % loop through different strains
 for strain = {'N2', 'HW', 'NP'}
@@ -39,6 +41,10 @@ for strain = {'N2', 'HW', 'NP'}
             load(file.name,'eigenWorms')
             % plot first few eigenworms
             for eigCtr = 1:nEigenworms
+                % check if we need to flip eigenworm upside-down
+                if eigenWorms(eigCtr,:)*reference.eigenWorms(eigCtr,:)'<0
+                    eigenWorms(eigCtr,:) = -eigenWorms(eigCtr,:);
+                end
                 plot(eigWormFig.Children(nEigenworms - eigCtr + 1),...
                     eigenWorms(eigCtr,:),'Color', plotColors(numCtr,:),...
                     'LineWidth',2)

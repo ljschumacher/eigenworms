@@ -72,6 +72,8 @@ if verbose
     figure
     plot(cumsum(eVals/sum(eVals)),'o','markeredgecolor',[1 0.5 0.1],...
         'markerfacecolor', [1 0.5 0.1],'markersize',8)
+    ylabel('cumulative variance explained')
+    xlabel('principal component number')
     %adjust font and font size
     set(gca, 'FontName', 'Helvetica', 'FontSize', 16);
 
@@ -90,6 +92,15 @@ if verbose
     figure
     imagesc(covarianceMat)
     set(gca,'YDir','normal')
+    %adjust font and font size
+    set(gca, 'FontName', 'Helvetica', 'FontSize', 16);
+    
+    % plot distribution of eigenvalues
+    figure
+    histogram(eVals,'BinWidth',0.025,'Normalization','Probability','EdgeColor','none')
+    xlim([0 ceil(max(eVals))])
+    xlabel('\lambda')
+    ylabel('P(\lambda)')
     %adjust font and font size
     set(gca, 'FontName', 'Helvetica', 'FontSize', 16);
 end

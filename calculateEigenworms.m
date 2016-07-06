@@ -69,12 +69,12 @@ for strain = {'N2', 'HW', 'NP'}
                     int32(dsCtr*10^ceil(log10(nSkeleta))) + frameIDs{dsCtr};
             end
             
-            display('Calculating shape correlations...')
-            plotShapeCorrelations(angleArray,wormIDarray,frameIDarray,250,...
-                ['figures/diagnostics/' S '_' num2str(N) 'worms_'],0)
-            masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
-            plotShapeCorrelations(masterProjections,wormIDarray,frameIDarray,250,...
-                ['figures/diagnostics/' S '_' num2str(N) 'worms_eigenProj_'],1)
+%             display('Calculating shape correlations...')
+%             plotShapeCorrelations(angleArray,wormIDarray,frameIDarray,250,...
+%                 ['figures/diagnostics/' S '_' num2str(N) 'worms_'],0)
+%             masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
+%             plotShapeCorrelations(masterProjections,wormIDarray,frameIDarray,250,...
+%                 ['figures/diagnostics/' S '_' num2str(N) 'worms_eigenProj_'],1)
 
             % randomly pick nFrames from the data, to not oversample
             % from correlated frames
@@ -87,20 +87,24 @@ for strain = {'N2', 'HW', 'NP'}
                         
             % find eigenworms
             [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
+            % save projections onto reduced dimensions, also for reference
+            % components and calc variance explained by reference comps
             eigenProjections = projectOnEigenWormsV(eigenWorms, angleArray, nEigenworms);
             masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
+            masterEigVals = diag((masterWorms*cov(angleArray,0,'omitrows'))/masterWorms);
+            masterVarExplained = masterEigVals/sum(var(angleArray));
             % save eigenWorms, eigenVals and first few projections
             save(['results/' S '_' num2str(N) 'worms_eigenData.mat'],'eigenWorms',...
-                'eigenVals','eigenProjections','masterProjections','nDatasets',...
-                'nFrames','wormIDarray','frameIDarray')
+                'eigenVals','eigenProjections','masterProjections','masterVarExplained',...
+                'nDatasets','nFrames','wormIDarray','frameIDarray')
             if showPlots
                 % save plots
                 figName = [S '_' num2str(N) 'worms'];
-                figSuffix = {'var','eig','cov'};
-                for figCtr = 1:3
+                figSuffix = {'var','eig','cov','eigenValueDistribution'};
+                for figCtr = 1:4
                     set(figure(figCtr),'name',[figName '_' figSuffix{figCtr} ...
                         '_' num2str(nDatasets) 'datasets_' num2str(size(angleArray,1),2) 'frames'])
-                    figFileName = ['figures/' figName '_' figSuffix{figCtr} '.eps'];
+                    figFileName = ['figures/diagnostics/' figName '_' figSuffix{figCtr} '.eps'];
                     exportfig(figure(figCtr),figFileName,exportOptions)
                     system(['epstopdf ' figFileName]);
                     system(['rm ' figFileName]);

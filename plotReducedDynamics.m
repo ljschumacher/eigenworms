@@ -34,7 +34,6 @@ for N = [1 5 15 25 40]
                 for plotCtr = 1:nComponents
                     ax = subAx(cmpCtr,plotCtr);
                     ax.XLim = [-2 2]; ax.YLim = [-2 2];
-                    ax.DataAspectRatio = [1 1 1];
                 end
             end
             bigAx.Title.String = ['strain ' S ', N = ' num2str(N) ' worms, '...
@@ -46,7 +45,7 @@ for N = [1 5 15 25 40]
             system(['epstopdf ' figName]);
             system(['rm ' figName]);
             %             close(eigProjectionFig)
-            clear eigenProjections masterProjections
+            clear masterProjections
         else
             display(['No data for strain=' S ', worms=' num2str(N)])
         end
