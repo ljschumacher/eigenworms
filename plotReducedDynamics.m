@@ -13,7 +13,7 @@ nComponents = 4;
 
 strains = {'N2', 'HW', 'NP'};
 nStrains = length(strains);
-for N = [1 5 15 25 40]
+for N = fliplr([1 5 15 25 40])
     % loop through different strains
     for strainCtr = 1:nStrains
         S = strains{strainCtr};
@@ -22,7 +22,9 @@ for N = [1 5 15 25 40]
         if ~isempty(file)
             eigProjectionFig = figure;
             % load eigenworm analysis result
-            load(file.name,'masterProjections')
+            load(file.name,'masterProjections');
+            % change the order of first and third masterworm to match ours
+            masterProjections = masterProjections(:,[3 2 1 4:end]);
             % normalise to unit variance
             masterProjections = zscore(masterProjections);
             % plot projected amplitudes

@@ -90,13 +90,15 @@ for strain = {'N2', 'HW', 'NP'}
             % save projections onto reduced dimensions, also for reference
             % components and calc variance explained by reference comps
             eigenProjections = projectOnEigenWormsV(eigenWorms, angleArray, nEigenworms);
+            varExplained = eigenVals/sum(var(angleArray));
             masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
-            masterEigVals = diag((masterWorms*cov(angleArray,0,'omitrows'))/masterWorms);
+            masterEigVals = diag((masterWorms(1:nEigenworms)*cov(angleArray,0,'omitrows'))...
+                /masterWorms(1:nEigenworms));
             masterVarExplained = masterEigVals/sum(var(angleArray));
             % save eigenWorms, eigenVals and first few projections
             save(['results/' S '_' num2str(N) 'worms_eigenData.mat'],'eigenWorms',...
-                'eigenVals','eigenProjections','masterProjections','masterVarExplained',...
-                'nDatasets','nFrames','wormIDarray','frameIDarray')
+                'eigenVals','eigenProjections','varExplained','masterProjections',...
+                'masterVarExplained','nDatasets','nFrames','wormIDarray','frameIDarray')
             if showPlots
                 % save plots
                 figName = [S '_' num2str(N) 'worms'];
