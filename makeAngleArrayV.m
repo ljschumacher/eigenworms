@@ -66,7 +66,7 @@ dAngle = diff(angles,1,2);
 [positiveJumpsRow, positiveJumpsCol] = find(dAngle > pi);
 [negativeJumpsRow, negativeJumpsCol] = find(dAngle < -pi);
 
-% subtract 2pi from remainging data after positive jumps
+% subtract 2pi from remaining data after positive jumps
 for jj = 1:length(positiveJumpsRow)
     angles(positiveJumpsRow(jj),(positiveJumpsCol(jj) + 1):end) = ...
         angles(positiveJumpsRow(jj),(positiveJumpsCol(jj) + 1):end) - 2*pi;%+1 to cancel shift of diff

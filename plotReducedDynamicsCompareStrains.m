@@ -1,5 +1,7 @@
 % combine projected amplitudes in space of first two eigenworms
-
+% issues / to-do:
+% - should the contour levels be at some cumulative probability, i.e.
+% whatever captures 90% or so of poses?
 close all
 clear
 

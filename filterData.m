@@ -1,9 +1,11 @@
-function [skelData, varargout] = filterData(filename,verbose,plotDiagnostics)
+function [skelData, varargout] = filterData(filename,verbose,plotDiagnostics,minFrames)
 % filter worm skeletal data by area, observed time, etc.
 % some filtering is hierarchical, meaning that the first few filters will
 % reduce the number of data to pass through the next filter
 
-minFrames = 25*30;
+if nargin <4
+    minFrames = 25*30;
+end
 
 if verbose
     display(['now filtering dataset ' filename(end-42:end-5)])

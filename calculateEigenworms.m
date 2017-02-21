@@ -25,11 +25,11 @@ for strain = {'N2', 'HW', 'NP'}
         load(['recordingsLog/strain' S 'worms' num2str(N) '.mat']);
         nFiles = length(filenames);
         % not all results may be present, so check how many
-        dsCtr = 1;
+        dsCtr = 0;
         datasets = {};
         for fileCtr=1:nFiles
             % find full path to folder
-            file = rdir(['/datafast/linus/Recordings/Results/*/' ...
+            file = rdir(['/data1/linus/CamilleData/Results/*/' ...
                 filenames{fileCtr}(1:end-5) '_skeletons.hdf5']);
             if ~isempty(file)
                 datasets{dsCtr} = file.name;
@@ -92,8 +92,8 @@ for strain = {'N2', 'HW', 'NP'}
             eigenProjections = projectOnEigenWormsV(eigenWorms, angleArray, nEigenworms);
             varExplained = eigenVals/sum(var(angleArray));
             masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
-            masterEigVals = diag((masterWorms(1:nEigenworms)*cov(angleArray,0,'omitrows'))...
-                /masterWorms(1:nEigenworms));
+            masterEigVals = diag(masterWorms(1:nEigenworms,:)*cov(angleArray,0,'omitrows')...
+                /masterWorms(1:nEigenworms,:));
             masterVarExplained = masterEigVals/sum(var(angleArray));
             % save eigenWorms, eigenVals and first few projections
             save(['results/' S '_' num2str(N) 'worms_eigenData.mat'],'eigenWorms',...

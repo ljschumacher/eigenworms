@@ -72,6 +72,7 @@ if verbose
     figure
     plot(cumsum(eVals/sum(eVals)),'o','markeredgecolor',[1 0.5 0.1],...
         'markerfacecolor', [1 0.5 0.1],'markersize',8)
+    ylim([0 1])
     ylabel('cumulative variance explained')
     xlabel('principal component number')
     %adjust font and font size
