@@ -19,6 +19,8 @@ pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 strains = {'npr1','N2'};
 wormnums = {'40','HD','1W'};
 maxBlobSize = 2.5e5;
+maxBlobSize_g = 1e4;
+intensityThresholds_g = [60, 40];
 
 for numCtr = 1:length(wormnums)
     wormnum = wormnums{numCtr};
@@ -29,24 +31,58 @@ for numCtr = 1:length(wormnums)
         % not all results may be present, so check how many
         filenames = importdata([strains{strainCtr} '_' wormnum '_r_list.txt']);
         numFiles = length(filenames);
+        if ~strcmp(wormnum,'1W')
+            filenames_g = importdata([strains{strainCtr} '_' wormnum '_g_list.txt']);
+        end
         % allocate variables
         skeleta = cell(numFiles,1);
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
-        skeletaSizes = NaN(numFiles,1);
         for fileCtr=1:numFiles
             filename = filenames{fileCtr};
             frameRate = h5readatt(filename,'/plate_worms','expected_fps');
-            %             blobFeats = h5read(filename,'/blob_features');
+            blobFeats = h5read(filename,'/blob_features');
             trajData = h5read(filename,'/trajectories_data');
             skelData = h5read(filename,'/skeleton');
+            if ~strcmp(wormnum,'1W')
+                filename_g = filenames_g{fileCtr};
+                trajData_g = h5read(filename_g,'/trajectories_data');
+                blobFeats_g = h5read(filename_g,'/blob_features');
+            end
             %% filter data
-            if strcmp(wormnum,'1W')
-                skeleta{fileCtr} = skelData(:,:,logical(trajData.is_good_skel));
+            if contains(filename,'55')||contains(filename,'54')
+                intensityThreshold = 70;
             else
-                % if it is multiworm data, we need to filter for isolated worms
-                loneWorms = horzcat(mindist{:})>=2500;
-                skeleta{fileCtr} = skelData(:,:,loneWorms&logical(trajData.is_good_skel));
+                intensityThreshold = 35;
+            end
+            trajData.filtered = (blobFeats.area*pixelsize^2<=maxBlobSize)&...
+                (blobFeats.intensity_mean>=intensityThreshold)&...
+                logical(trajData.is_good_skel);
+            if strcmp(wormnum,'1W')
+                skeleta{fileCtr} = skelData(:,:,trajData.filtered);
+            else
+                % if it is multiworm data, we need to filter for worms in
+                % clusters
+                framesAnalyzed = unique(trajData.frame_number(trajData.filtered));
+                numFrames = numel(framesAnalyzed);
+                trajData_g.filtered = (blobFeats_g.area*pixelsize^2<=maxBlobSize_g)&...
+                    (blobFeats_g.intensity_mean>=intensityThresholds_g(numCtr));
+                for frameCtr = 1:numFrames
+                    frame = framesAnalyzed(frameCtr);
+                    [x, y] = getWormPositions(trajData, frame);
+                    [x_g, y_g] = getWormPositions(trajData_g, frame);
+                    if numel(x_g)>=1&&numel(x)>=1 % need at least two worms in frame to calculate distances
+                        redToGreenDistances = pdist2([x y],[x_g y_g]).*pixelsize; % distance of every red worm to every green
+                        mindist = min(redToGreenDistances,[],2);
+                    elseif numel(x)>=1
+                        mindist = Inf(size(x));
+                    end
+                    % exclude worms with mindist >= 2500
+                    trajData.filtered(...
+                        (trajData.frame_number==frame)&trajData.filtered) = ...
+                        mindist<2500;
+                end
+                skeleta{fileCtr} = skelData(:,:,trajData.filtered);
             end
         end
         % pool data from multiple recordings
@@ -55,7 +91,7 @@ for numCtr = 1:length(wormnums)
         [skeleta, framesSampled] = datasample(skeleta,numFrames,3,'Replace',false);
         % create angle arrays from skeleta
         [angleArray, ~] = makeAngleArrayV(squeeze(skeleta(1,:,:))',squeeze(skeleta(2,:,:))');
-
+        
         %% find eigenworms
         [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
         % save projections onto reduced dimensions, also for reference
