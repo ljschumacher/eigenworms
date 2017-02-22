@@ -1,11 +1,13 @@
 clear
+% issues/todo:
+% - parfor does not properly work for case wormnum 1W
 
 % figure export options
 exportOptions = struct('Color','rgb');
 
 % frames to use for calculation of eigenworms, for each combination of
 % strain and worm number
-numFrames = 10000;
+numSamples = 100000;
 
 % load master eigenworms for projections
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
@@ -20,7 +22,7 @@ strains = {'npr1','N2'};
 wormnums = {'40','HD','1W'};
 maxBlobSize = 2.5e5;
 maxBlobSize_g = 1e4;
-intensityThresholds_g = [60, 40];
+intensityThresholds_g = [60, 40, 0];
 
 for numCtr = 1:length(wormnums)
     wormnum = wormnums{numCtr};
@@ -38,7 +40,7 @@ for numCtr = 1:length(wormnums)
         skeleta = cell(numFiles,1);
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
-        for fileCtr=1:numFiles
+        parfor fileCtr=1:numFiles % can be parfor
             filename = filenames{fileCtr};
             frameRate = h5readatt(filename,'/plate_worms','expected_fps');
             blobFeats = h5read(filename,'/blob_features');
@@ -73,14 +75,16 @@ for numCtr = 1:length(wormnums)
                     [x_g, y_g] = getWormPositions(trajData_g, frame);
                     if numel(x_g)>=1&&numel(x)>=1 % need at least two worms in frame to calculate distances
                         redToGreenDistances = pdist2([x y],[x_g y_g]).*pixelsize; % distance of every red worm to every green
-                        mindist = min(redToGreenDistances,[],2);
+%                         mindist = min(redToGreenDistances,[],2);
+                        numNeighbours = sum(redToGreenDistances<1000,2);
                     elseif numel(x)>=1
-                        mindist = Inf(size(x));
+%                         mindist = Inf(size(x));
+                        numNeighbours = zeros(size(x));
                     end
-                    % exclude worms with mindist >= 2500
+                    % exclude worms with mindist >= some value
                     trajData.filtered(...
                         (trajData.frame_number==frame)&trajData.filtered) = ...
-                        mindist<2500;
+                        numNeighbours>=2;
                 end
                 skeleta{fileCtr} = skelData(:,:,trajData.filtered);
             end
@@ -88,7 +92,11 @@ for numCtr = 1:length(wormnums)
         % pool data from multiple recordings
         skeleta = cat(3,skeleta{:});
         % randomly pick numFrames from the data, to not oversample
-        [skeleta, framesSampled] = datasample(skeleta,numFrames,3,'Replace',false);
+        if numSamples<=size(skeleta,3)
+            [skeleta, framesSampled] = datasample(skeleta,numSamples,3,'Replace',false);
+        else
+            warning('not enough skeleta to sample form')
+        end
         % create angle arrays from skeleta
         [angleArray, ~] = makeAngleArrayV(squeeze(skeleta(1,:,:))',squeeze(skeleta(2,:,:))');
         
@@ -105,7 +113,7 @@ for numCtr = 1:length(wormnums)
         % save eigenWorms, eigenVals and first few projections
         save(['results/eigenData_' strain '_' wormnum '_bodywall.mat'],'eigenWorms',...
             'eigenVals','eigenProjections','varExplained','masterProjections',...
-            'masterVarExplained','numFiles','numFrames')
+            'masterVarExplained','numFiles','numSamples')
         if showPlots
             % save plots
             figName = [strain '_' wormnum ];

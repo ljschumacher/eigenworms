@@ -1,9 +1,7 @@
 % combine eigenworm plots from saved eigenworms for different strains
 
 % issues/to-do
-% - to plot variance explained, we actually need to save all eigenvalues,
-% or at least their sum. all eigenvalues might also be useful for
-% statistical tests on their distribution.
+
 close all
 clear
 

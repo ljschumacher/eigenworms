@@ -42,7 +42,7 @@ for N = fliplr([1 5 15 25 40])
                 num2str(size(masterProjections,1)/25/3600,2) ' worm-hours'];
             % annotate and save figure
             set(eigProjectionFig, 'name', ['projected amplitudes for N=' num2str(N) ' worms'])
-            figName = ['figures/' S '_' num2str(N) 'worms_projections.eps'];
+            figName = ['figures/projections_' S '_' num2str(N) 'worms.eps'];
             exportfig(eigProjectionFig,figName,exportOptions)
             system(['epstopdf ' figName]);
             system(['rm ' figName]);

@@ -49,7 +49,7 @@ for strain = strains
     ylabel('$\langle\cos\theta\rangle$','Interpreter','LaTeX')
     xlabel('$\Delta s$','Interpreter','LaTeX')
     xlim([0 maxLag])
-    figName = [strain{:} '_wormPersistence.eps'];
+    figName = ['figures/wormPersistence_' strain{:} '.eps'];
     exportfig(gcf,figName,'color','rgb')
     system(['epstopdf ' figName]);
     system(['rm ' figName]);

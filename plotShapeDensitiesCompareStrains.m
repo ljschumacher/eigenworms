@@ -48,7 +48,7 @@ for N = [1 5 15 25 40]
     box on
     xlabel('a_1'), ylabel('a_2')
     set(eigProjectionFig, 'name', ['projected amplitudes for N=' num2str(N) ' worms'])
-    figName = ['figures/' num2str(N) 'worms_projections.eps'];
+    figName = ['figures/projections_' num2str(N) 'worms.eps'];
     exportfig(eigProjectionFig,figName,exportOptions)
     system(['epstopdf ' figName]);
     system(['rm ' figName]);
