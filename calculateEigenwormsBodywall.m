@@ -13,16 +13,18 @@ numSamples = 100000;
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
-showPlots = 1;
+showPlots = true;
+plotDiagnostics = true;
 nEigenworms = 6;
 
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 
 strains = {'npr1','N2'};
-wormnums = {'40','HD','1W'};
+wormnums = {'1W','40','HD'};
 maxBlobSize = 2.5e5;
 maxBlobSize_g = 1e4;
-intensityThresholds_g = [60, 40, 0];
+minSkelLength = 850;
+intensityThresholds_g = [0, 60, 40];
 
 for numCtr = 1:length(wormnums)
     wormnum = wormnums{numCtr};
@@ -40,7 +42,7 @@ for numCtr = 1:length(wormnums)
         skeleta = cell(numFiles,1);
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
-        parfor fileCtr=1:numFiles % can be parfor
+        for fileCtr=1:numFiles % can be parfor
             filename = filenames{fileCtr};
             frameRate = h5readatt(filename,'/plate_worms','expected_fps');
             blobFeats = h5read(filename,'/blob_features');
@@ -52,6 +54,7 @@ for numCtr = 1:length(wormnums)
                 blobFeats_g = h5read(filename_g,'/blob_features');
             end
             %% filter data
+            % filter by blob size and intensity
             if contains(filename,'55')||contains(filename,'54')
                 intensityThreshold = 70;
             else
@@ -60,11 +63,17 @@ for numCtr = 1:length(wormnums)
             trajData.filtered = (blobFeats.area*pixelsize^2<=maxBlobSize)&...
                 (blobFeats.intensity_mean>=intensityThreshold)&...
                 logical(trajData.is_good_skel);
+            % filter by skeleton length
+            if plotDiagnostics
+                plotSkelLengthDist(skelData(:,:,trajData.filtered),pixelsize,minSkelLength,filename);
+            end
+            trajData.filtered(...
+                sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)))<minSkelLength)...
+                = false;
+            % if it is multiworm data, we need to filter for worms in clusters
             if strcmp(wormnum,'1W')
                 skeleta{fileCtr} = skelData(:,:,trajData.filtered);
             else
-                % if it is multiworm data, we need to filter for worms in
-                % clusters
                 framesAnalyzed = unique(trajData.frame_number(trajData.filtered));
                 numFrames = numel(framesAnalyzed);
                 trajData_g.filtered = (blobFeats_g.area*pixelsize^2<=maxBlobSize_g)&...
