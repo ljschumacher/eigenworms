@@ -7,7 +7,7 @@ histogram(sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2))),...
 hold on
 plot([minSkelLength minSkelLength],[0 0.1],'r--')
 xlabel('skeleton length (\mu m)'), ylabel('P')
-figName = strrep(strrep(filename(end-31:end),'/',''),'_',' ');
+figName = strrep(filename,'_',' ');
 title(figName,'Fontweight','normal')
 
 % figure export

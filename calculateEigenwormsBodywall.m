@@ -7,7 +7,7 @@ exportOptions = struct('Color','rgb');
 
 % frames to use for calculation of eigenworms, for each combination of
 % strain and worm number
-numSamples = 100000;
+numSamples = 10000;
 
 % load master eigenworms for projections
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
@@ -65,7 +65,8 @@ for numCtr = 1:length(wormnums)
                 logical(trajData.is_good_skel);
             % filter by skeleton length
             if plotDiagnostics
-                plotSkelLengthDist(skelData(:,:,trajData.filtered),pixelsize,minSkelLength,filename);
+                plotSkelLengthDist(skelData(:,:,trajData.filtered),pixelsize,minSkelLength,...
+                    [strain '_' wormnum '_' strrep(filename(end-31:end),'/','')]);
             end
             trajData.filtered(...
                 sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)))<minSkelLength)...
@@ -85,7 +86,7 @@ for numCtr = 1:length(wormnums)
                     if numel(x_g)>=1&&numel(x)>=1 % need at least two worms in frame to calculate distances
                         redToGreenDistances = pdist2([x y],[x_g y_g]).*pixelsize; % distance of every red worm to every green
 %                         mindist = min(redToGreenDistances,[],2);
-                        numNeighbours = sum(redToGreenDistances<1000,2);
+                        numNeighbours = sum(redToGreenDistances<500,2);
                     elseif numel(x)>=1
 %                         mindist = Inf(size(x));
                         numNeighbours = zeros(size(x));
