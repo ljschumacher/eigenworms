@@ -12,8 +12,8 @@ nEigenworms = 4;
 strains = {'N2', 'npr1'};
 nStrains = length(strains);
 wormnums = {'HD','40','1W'};
-nWeights = 5;
-weights = linspace(-1,1,nWeights)';
+nVariations = 5;
+weights = linspace(-1,1,nVariations)';
 
 % for reference, eigenworms from Brown et al. 2013
 reference = load('../Motif_Analysis/eigenWorms.mat');
@@ -33,7 +33,7 @@ for strainCtr = 1:nStrains
             % plot first few eigenworms in real space
             for eigCtr = 1:nEigenworms
                 subplot(nEigenworms,length(wormnums),(eigCtr-1)*length(wormnums)+numCtr), hold on
-                set(gca,'ColorOrder',parula(nWeights),'Color','none')
+                set(gca,'ColorOrder',parula(nVariations),'Color','none')
                 [x, y] = angles2xy(weights*eigenWorms(eigCtr,:));
                 % check if we need to flip eigenworm upside-down
                 if eigenWorms(eigCtr,:)*reference.eigenWorms(eigCtr,:)'<0
