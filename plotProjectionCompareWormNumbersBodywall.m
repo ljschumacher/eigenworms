@@ -8,7 +8,7 @@ clear
 % figure export options
 exportOptions = struct('Color','rgb');
 
-nComponents = 4;
+nEigenworms = 4;
 
 strains = {'N2', 'npr1'};
 nStrains = length(strains);
@@ -16,6 +16,7 @@ wormnums = {'HD','40','1W'};
 for strainCtr = 1:nStrains
     S = strains{strainCtr};
     eigProjectionFig = figure;
+    plotHandles = NaN(size(wormnums));
     for numCtr = 1:length(wormnums)
         N = wormnums{numCtr};
         % load eigenworm data
@@ -28,15 +29,17 @@ for strainCtr = 1:nStrains
             % normalise to unit variance
             % %             masterProjections = zscore(masterProjections);
             % plot projected amplitudes
-            for cmpCtr = 1:nComponents
-                subplot(ceil(sqrt(nComponents)),floor(sqrt(nComponents)),cmpCtr)
-                histogram(masterProjections(:,cmpCtr),...
-                    'Normalization','Probability','DisplayStyle','stairs')
+            for cmpCtr = 1:nEigenworms
+                subplot(ceil(nEigenworms/2),2,cmpCtr)
+                plotHandles(numCtr) =...
+                    histogram(masterProjections(:,cmpCtr),...
+                    'Normalization','Probability','DisplayStyle','stairs');
                 if numCtr == 1
                     hold on
                     ax = gca;
                     ax.YLabel.String = 'P';
                     ax.XLabel.String =  ['a_' num2str(cmpCtr)];
+                    ax.XLim = [-10 10];
                 end
             end
             clear masterProjections
@@ -45,12 +48,12 @@ for strainCtr = 1:nStrains
         end
     end
     % annotate and save figure
-    legend(wormnums)
+    legend(plotHandles,wormnums)
     set(eigProjectionFig, 'name', ['projected amplitudes ' S])
-    figName = ['figures/projections_' N 'worms_CompareWormNumbers.eps'];
-    exportfig(eigProjectionFig,figName,exportOptions)
-    system(['epstopdf ' figName]);
-    system(['rm ' figName]);
+    figName = ['projections_' S '_CompareWormNumbers'];
+    exportfig(eigProjectionFig,['figures/' figName '.eps'],exportOptions)
+    system(['epstopdf ' figName '.eps']);
+    system(['rm figures/' figName '.eps']);
     %             close(eigProjectionFig)
 end
 tilefigs([3 5])

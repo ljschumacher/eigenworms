@@ -51,6 +51,7 @@ for strainCtr = 1:nStrains
         box on
         xlabel('x'), ylabel('y')
         xlim([0 48])
+        ylim([-5 5])
     end
     % annotate and save figure
     legH = legend(eigWormFig.Children(1),wormnums,'Location','SouthEast');

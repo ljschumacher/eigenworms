@@ -20,6 +20,9 @@ reference = load('../Motif_Analysis/eigenWorms.mat');
 % change the order of first and third masterworm to match ours
 % reference.eigenWorms = reference.eigenWorms([3 2 1 4:end], :);
 
+%% change the amount being varied to 2 sigma of the projection (own)
+                %sigma2 = 2*std(masterProjections(:,cmpCtr));
+%% also use this to plot variation on projections of master eigenworms                
 for strainCtr = 1:nStrains
     S = strains{strainCtr};
     eigWormFig = figure;
