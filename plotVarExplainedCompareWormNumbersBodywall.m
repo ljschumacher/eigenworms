@@ -25,8 +25,8 @@ for strainCtr = 1:nStrains
         if ~isempty(file)
             % load eigenworm analysis result
             load(file.name,'masterVarExplained','varExplained');
-            % change the order of first and third masterworm to match ours
-            masterVarExplained = masterVarExplained([3 2 1 4:end]);
+%             % change the order of first and third masterworm to match ours
+%             masterVarExplained = masterVarExplained([3 2 1 4:end]);
             plotHandles(numCtr) =...
                 plot(0:6,cumsum([0; varExplained]),'-o','Color',plotColors(numCtr,:));            
             if numCtr==1

@@ -24,8 +24,8 @@ for numCtr = 1:length(wormnums)
         if ~isempty(file)
             % load eigenworm analysis result
             load(file.name,'masterProjections');
-            % change the order of first and third masterworm to match ours
-            masterProjections = masterProjections(:,[3 2 1 4:end]);
+%             % change the order of first and third masterworm
+%             masterProjections = masterProjections(:,[3 2 1 4:end]);
             % normalise to unit variance
 % %             masterProjections = zscore(masterProjections);
             % plot projected amplitudes
@@ -38,6 +38,7 @@ for numCtr = 1:length(wormnums)
                     ax = gca;
                     ax.YLabel.String = 'P';
                     ax.XLabel.String =  ['a_' num2str(cmpCtr)];
+                    ax.XLim = [-10 10];
                 end
             end
             clear masterProjections
@@ -46,7 +47,7 @@ for numCtr = 1:length(wormnums)
         end
     end
     % annotate and save figure
-    legend(strains)
+    legend(strains,'Location','East')
     set(eigProjectionFig, 'name', ['projected amplitudes ' N ' worm data'])
     figName = ['figures/projections_' N 'worms_strainComparison.eps'];
     exportfig(eigProjectionFig,figName,exportOptions)
@@ -54,4 +55,4 @@ for numCtr = 1:length(wormnums)
     system(['rm ' figName]);
     %             close(eigProjectionFig)
 end
-tilefigs([3 5])
+tilefigs([2 3])

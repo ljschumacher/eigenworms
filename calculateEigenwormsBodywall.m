@@ -18,7 +18,8 @@ plotDiagnostics = true;
 nEigenworms = 6;
 
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
-
+neighbourCutOff = 500; % distance in microns to consider a neighbour close
+minNumNeighbours = 2;
 strains = {'npr1','N2'};
 wormnums = {'1W','40','HD'};
 maxBlobSize = 2.5e5;
@@ -71,30 +72,30 @@ for numCtr = 1:length(wormnums)
             trajData.filtered(...
                 sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)))<minSkelLength)...
                 = false;
-            % if it is multiworm data, we need to filter for worms in clusters
+            % load skeleton data
             if strcmp(wormnum,'1W')
                 skeleta{fileCtr} = skelData(:,:,trajData.filtered);
-            else
+            else % if it is multiworm data, we need to filter for worms in clusters
                 framesAnalyzed = unique(trajData.frame_number(trajData.filtered));
                 numFrames = numel(framesAnalyzed);
+                % filter green channel by blob size and intensity
                 trajData_g.filtered = (blobFeats_g.area*pixelsize^2<=maxBlobSize_g)&...
                     (blobFeats_g.intensity_mean>=intensityThresholds_g(numCtr));
+                % calculate red-green neighbour distances to filter for in-cluster
                 for frameCtr = 1:numFrames
                     frame = framesAnalyzed(frameCtr);
                     [x, y] = getWormPositions(trajData, frame);
                     [x_g, y_g] = getWormPositions(trajData_g, frame);
                     if numel(x_g)>=1&&numel(x)>=1 % need at least two worms in frame to calculate distances
                         redToGreenDistances = pdist2([x y],[x_g y_g]).*pixelsize; % distance of every red worm to every green
-%                         mindist = min(redToGreenDistances,[],2);
-                        numNeighbours = sum(redToGreenDistances<500,2);
+                        numNeighbours = sum(redToGreenDistances<neighbourCutOff,2);
                     elseif numel(x)>=1
-%                         mindist = Inf(size(x));
                         numNeighbours = zeros(size(x));
                     end
-                    % exclude worms with mindist >= some value
+                    % exclude worms with fewer than some number of neighbours
                     trajData.filtered(...
                         (trajData.frame_number==frame)&trajData.filtered) = ...
-                        numNeighbours>=2;
+                        numNeighbours>=minNumNeighbours; % keeps only those worms more than minNumNeighbours neighbours
                 end
                 skeleta{fileCtr} = skelData(:,:,trajData.filtered);
             end

@@ -15,6 +15,11 @@ wormnums = {'HD','40','1W'};
 nVariations = 5;
 weights = linspace(-1,1,nVariations)';
 
+% for reference, eigenworms from Brown et al. 2013
+reference = load('../Motif_Analysis/eigenWorms.mat');
+% % change the order of first and third masterworm 
+% reference.eigenWorms = reference.eigenWorms([3 2 1 4:end], :);
+
 %% also use this to plot variation on projections of master eigenworms                
 for strainCtr = 1:nStrains
     S = strains{strainCtr};
@@ -25,14 +30,14 @@ for strainCtr = 1:nStrains
         file = rdir(['results/eigenData_' S '_' N '_bodywall.mat']);
         if ~isempty(file)
             % load eigenworm analysis result
-            load(file.name,'eigenWorms','eigenProjections')
+            load(file.name,'eigenWorms','masterProjections')
             % plot first few eigenworms in real space
             for eigCtr = 1:nEigenworms
                 subplot(nEigenworms,length(wormnums),(eigCtr-1)*length(wormnums)+numCtr), hold on
                 set(gca,'ColorOrder',parula(nVariations),'Color','none')
-                sigma2 = 2*std(eigenProjections(:,eigCtr));
-                [x, y] = angles2xy(sigma2*weights*eigenWorms(eigCtr,:));
-                % plot eigenworms in real space, centered on y=0
+                sigma2 = 2*std(masterProjections(:,eigCtr));
+                [x, y] = angles2xy(sigma2*weights*reference.eigenWorms(eigCtr,:));
+                % plot variation of reference eigenworms in real space, centered on y=0
                 plot((x-mean(x,2))',(y-mean(y,2))','LineWidth',2)
                 if eigCtr==1
                     title(N,'FontWeight','normal')
@@ -49,8 +54,8 @@ for strainCtr = 1:nStrains
         end
     end
     % annotate and save figure
-    set(eigWormFig, 'name', ['Strain ' S ' ' N ' eigenworms'])
-    figFileName = ['figures/' S '_' N '_eigenworms_variation.eps'];
+    set(eigWormFig, 'name', ['Strain ' S ' ' N ' reference eigenworms'])
+    figFileName = ['figures/' S '_' N '_refeigenworms_variation.eps'];
     exportfig(eigWormFig,figFileName,exportOptions)
     system(['epstopdf ' figFileName]);
     system(['rm ' figFileName]);

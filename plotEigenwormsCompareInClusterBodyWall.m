@@ -36,7 +36,7 @@ for strainCtr = 1:nStrains
                 if eigenWorms(eigCtr,:)*reference.eigenWorms(eigCtr,:)'<0
                     eigenWorms(eigCtr,:) = -eigenWorms(eigCtr,:);
                 end
-                plot(x(eigCtr,:),y(eigCtr,:),'LineWidth',2)
+                plot(x(eigCtr,:),y(eigCtr,:)-mean(y(eigCtr,:)),'LineWidth',2)
             end
         else
             display(['No data for strain=' S ', worms=' num2str(N)])
@@ -46,7 +46,7 @@ for strainCtr = 1:nStrains
     [xref, yref] = angles2xy(reference.eigenWorms(1:nEigenworms,:));
     for eigCtr = 1:nEigenworms
         subplot(ceil(nEigenworms/2),2,eigCtr)
-        plot(xref(eigCtr,:),yref(eigCtr,:),'k--')
+        plot(xref(eigCtr,:),yref(eigCtr,:)- mean(yref(eigCtr,:)),'k--')
         title(num2str(eigCtr),'FontWeight','normal')
         box on
         xlabel('x'), ylabel('y')

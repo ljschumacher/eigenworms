@@ -24,8 +24,8 @@ for strainCtr = 1:nStrains
         if ~isempty(file)
             % load eigenworm analysis result
             load(file.name,'masterProjections');
-            % change the order of first and third masterworm to match ours
-            masterProjections = masterProjections(:,[3 2 1 4:end]);
+%             % change the order of first and third reference eigenworm
+%             masterProjections = masterProjections(:,[3 2 1 4:end]);
             % normalise to unit variance
             % %             masterProjections = zscore(masterProjections);
             % plot projected amplitudes
@@ -52,7 +52,7 @@ for strainCtr = 1:nStrains
     set(eigProjectionFig, 'name', ['projected amplitudes ' S])
     figName = ['projections_' S '_CompareWormNumbers'];
     exportfig(eigProjectionFig,['figures/' figName '.eps'],exportOptions)
-    system(['epstopdf ' figName '.eps']);
+    system(['epstopdf figures/' figName '.eps']);
     system(['rm figures/' figName '.eps']);
     %             close(eigProjectionFig)
 end
