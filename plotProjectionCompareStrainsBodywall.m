@@ -32,7 +32,7 @@ for numCtr = 1:length(wormnums)
             for cmpCtr = 1:nComponents
                 subplot(ceil(sqrt(nComponents)),floor(sqrt(nComponents)),cmpCtr)
                 histogram(masterProjections(:,cmpCtr),...
-                    'Normalization','Probability','DisplayStyle','stairs')
+                    'Normalization','pdf','DisplayStyle','stairs')
                 if strainCtr == 1
                     hold on
                     ax = gca;

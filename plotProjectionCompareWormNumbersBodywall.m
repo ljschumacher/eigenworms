@@ -33,7 +33,7 @@ for strainCtr = 1:nStrains
                 subplot(ceil(nEigenworms/2),2,cmpCtr)
                 plotHandles(numCtr) =...
                     histogram(masterProjections(:,cmpCtr),...
-                    'Normalization','Probability','DisplayStyle','stairs');
+                    'Normalization','pdf','DisplayStyle','stairs');
                 if numCtr == 1
                     hold on
                     ax = gca;
@@ -56,4 +56,4 @@ for strainCtr = 1:nStrains
     system(['rm figures/' figName '.eps']);
     %             close(eigProjectionFig)
 end
-tilefigs([3 5])
+tilefigs([2 3])
