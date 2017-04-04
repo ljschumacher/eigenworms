@@ -54,8 +54,8 @@ for strainCtr = 1:nStrains
         end
     end
     % annotate and save figure
-    set(eigWormFig, 'name', ['Strain ' S ' ' N ' reference eigenworms'])
-    figFileName = ['figures/' S '_' N '_refeigenworms_variation.eps'];
+    set(eigWormFig, 'name', ['Strain ' S ' reference eigenworms'])
+    figFileName = ['figures/refeigenworms_variation_' S '.eps'];
     exportfig(eigWormFig,figFileName,exportOptions)
     system(['epstopdf ' figFileName]);
     system(['rm ' figFileName]);

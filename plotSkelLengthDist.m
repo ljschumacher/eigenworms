@@ -1,11 +1,12 @@
-function [ ] = plotSkelLengthDist(skelData,pixelsize,minSkelLength,filename)
+function [ ] = plotSkelLengthDist(skelData,pixelsize,minSkelLength,maxSkelLength,filename)
 
 
 skelLengthFig = figure;
 skelLengths = sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)));
 histogram(skelLengths,'pdf','Probability','EdgeColor','none')
 hold on
-plot([minSkelLength minSkelLength],[0 0.1],'r--')
+plot(minSkelLength,[0 0.1],'r--')
+plot(maxSkelLength,[0 0.1],'r--')
 xlabel('skeleton length (\mu m)'), ylabel('P')
 figName = strrep(filename,'_',' ');
 title(figName,'Fontweight','normal')

@@ -57,7 +57,7 @@ for strainCtr = 1:nStrains
     legH = legend(eigWormFig.Children(1),wormnums,'Location','SouthEast');
 %     legH.Title.String = 'N worms';
     set(eigWormFig, 'name', ['Strain ' S ' eigenworms'])
-    figFileName = ['figures/' S '_eigenworms_compareInCluster.eps'];
+    figFileName = ['figures/eigenworms_compareInCluster_' S '.eps'];
     exportfig(eigWormFig,figFileName,exportOptions)
     system(['epstopdf ' figFileName]);
     system(['rm ' figFileName]);

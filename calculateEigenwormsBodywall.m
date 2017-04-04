@@ -14,17 +14,18 @@ load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
 showPlots = true;
-plotDiagnostics = false;
+plotDiagnostics = true;
 nEigenworms = 6;
 
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 neighbourCutOff = 500; % distance in microns to consider a neighbour close
-minNumNeighbours = 2;
+minNumNeighbours = 3;
 strains = {'npr1','N2'};
 wormnums = {'40','HD','1W'};
 maxBlobSize = 2.5e5;
 maxBlobSize_g = 1e4;
 minSkelLength = 850;
+maxSkelLength = 1500;
 intensityThresholds_g = [60, 40, NaN];
 
 for numCtr = 1:length(wormnums)
@@ -34,10 +35,10 @@ for numCtr = 1:length(wormnums)
         close all
         %% load data
         % not all results may be present, so check how many
-        filenames = importdata([strains{strainCtr} '_' wormnum '_r_list.txt']);
+        filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
         numFiles = length(filenames);
         if ~strcmp(wormnum,'1W')
-            filenames_g = importdata([strains{strainCtr} '_' wormnum '_g_list.txt']);
+            filenames_g = importdata(['datalists/' strains{strainCtr} '_' wormnum '_g_list.txt']);
         else
             filenames_g = {};
         end
@@ -69,11 +70,12 @@ for numCtr = 1:length(wormnums)
                     logical(trajData.is_good_skel);
                 % filter by skeleton length
                 if plotDiagnostics
-                    plotSkelLengthDist(skelData(:,:,trajData.filtered),pixelsize,minSkelLength,...
+                    plotSkelLengthDist(skelData(:,:,trajData.filtered),pixelsize,...
+                        minSkelLength,maxSkelLength,...
                         [strain '_' wormnum '_' strrep(filename(end-31:end),'/','')]);
                 end
-                trajData.filtered(...
-                    sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)))<minSkelLength)...
+                skelLengths = sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)));
+                trajData.filtered(skelLengths>maxSkelLength|skelLengths<minSkelLength)...
                     = false;
                 % load skeleton data
                 if strcmp(wormnum,'1W')
@@ -84,16 +86,9 @@ for numCtr = 1:length(wormnums)
                     % filter green channel by blob size and intensity
                     trajData_g.filtered = (blobFeats_g.area*pixelsize^2<=maxBlobSize_g)&...
                         (blobFeats_g.intensity_mean>=intensityThresholds_g(numCtr));
-                    % calculate red-green neighbour distances to filter for in-cluster
-                    for frameCtr = 1:numFrames
-                        frame = framesAnalyzed(frameCtr);
-                        [inCluster, ~, ~] = getWormClusterStatus2channel(...
-                            trajData,trajData_g, frame,pixelsize, 2500, neighbourCutOff, minNumNeighbours);
-                        % exclude worm-frames with fewer than some number of neighbours
-                        trajData.filtered(...
-                            (trajData.frame_number==frame)&trajData.filtered) = ...
-                            inCluster; % keeps only those worms more than minNumNeighbours neighbours
-                    end
+                    % filter for in-cluster
+                    num_close_neighbours_rg = h5read(filename,'/num_close_neighbours_rg');
+                    trajData.filtered = num_close_neighbours_rg>=minNumNeighbours;
                     skeleta{fileCtr} = skelData(:,:,trajData.filtered);
                 end
             else
