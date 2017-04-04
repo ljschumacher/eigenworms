@@ -3,10 +3,10 @@ function [ ] = plotSkelLengthDist(skelData,pixelsize,minSkelLength,maxSkelLength
 
 skelLengthFig = figure;
 skelLengths = sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)));
-histogram(skelLengths,'pdf','Probability','EdgeColor','none')
+histogram(skelLengths,'Normalization','pdf','EdgeColor','none')
 hold on
-plot(minSkelLength,[0 0.1],'r--')
-plot(maxSkelLength,[0 0.1],'r--')
+plot(minSkelLength,[0 0.02],'r--')
+plot(maxSkelLength,[0 0.02],'r--')
 xlabel('skeleton length (\mu m)'), ylabel('P')
 figName = strrep(filename,'_',' ');
 title(figName,'Fontweight','normal')
@@ -20,9 +20,12 @@ if any(rejected)
     overlayRejected = axes('Position',newpos,'Visible','off');
     plotSkeletons(skelData(:,:,rejected),9,'r');
 end
-newpos(1) = axpos(1) + 0.67*axpos(3); % start at 2/3 width
-overlayAccepted = axes('Position',newpos,'Visible','off');
-plotSkeletons(skelData(:,:,skelLengths>minSkelLength),9,'k');
+accepted = skelLengths>minSkelLength;
+if any(accepted)
+    newpos(1) = axpos(1) + 0.67*axpos(3); % start at 2/3 width
+    overlayAccepted = axes('Position',newpos,'Visible','off');
+    plotSkeletons(skelData(:,:,skelLengths>minSkelLength),9,'k');
+end
 % figure export
 figFileName = ['figures/diagnostics/' strrep(strrep(figName,' ','_'),'s.hdf5','') 'lengths.eps'];
 exportfig(skelLengthFig,figFileName,'Color','rgb')
