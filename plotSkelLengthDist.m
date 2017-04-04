@@ -18,13 +18,15 @@ newpos = axpos;
 newpos(3) = 0.33*axpos(3); % third width
 if any(rejected)
     overlayRejected = axes('Position',newpos,'Visible','off');
-    plotSkeletons(skelData(:,:,rejected),9,'r');
+    plotSkeletons(skelData(:,:,rejected),min(9,nnz(rejected)),'r');
 end
 accepted = skelLengths>minSkelLength;
 if any(accepted)
     newpos(1) = axpos(1) + 0.67*axpos(3); % start at 2/3 width
     overlayAccepted = axes('Position',newpos,'Visible','off');
-    plotSkeletons(skelData(:,:,skelLengths>minSkelLength),9,'k');
+    plotSkeletons(skelData(:,:,skelLengths>minSkelLength),min(9,nnz(accepted)),'k');
+else
+    1;
 end
 % figure export
 figFileName = ['figures/diagnostics/' strrep(strrep(figName,' ','_'),'s.hdf5','') 'lengths.eps'];
