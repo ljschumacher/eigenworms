@@ -47,8 +47,8 @@ for numCtr = 1:length(wormnums)
                     trajData_g = h5read(filename_g,'/trajectories_data');
                     blobFeats_g = h5read(filename_g,'/blob_features');
                     % filter green channel by blob size and intensity
-                    trajData_g.filtered = (blobFeats_g.area*pixelsize^2<=maxBlobSize_g)&...
-                        (blobFeats_g.intensity_mean>=intensityThresholds_g(numCtr));
+                    trajData_g.filtered = filterIntensityAndSize(blobFeats_g,pixelsize,...
+                    intensityThresholds_g(numCtr),maxBlobSize_g);
                 end
                 if ~strcmp(wormnum,'1W') % if it is multiworm data, we need to filter for worms in clusters
                     num_close_neighbours_rg = h5read(filename,'/num_close_neighbours_rg');

@@ -5,8 +5,8 @@ skelLengthFig = figure;
 skelLengths = sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)));
 histogram(skelLengths,'Normalization','pdf','EdgeColor','none')
 hold on
-plot(minSkelLength,[0 0.02],'r--')
-plot(maxSkelLength,[0 0.02],'r--')
+plot(minSkelLength*[1 1],[0 0.02],'r--')
+plot(maxSkelLength*[1 1],[0 0.02],'r--')
 xlabel('skeleton length (\mu m)'), ylabel('P')
 figName = strrep(filename,'_',' ');
 title(figName,'Fontweight','normal')
@@ -29,11 +29,12 @@ else
     1;
 end
 % figure export
-figFileName = ['figures/diagnostics/' strrep(strrep(figName,' ','_'),'s.hdf5','') 'lengths.eps'];
-exportfig(skelLengthFig,figFileName,'Color','rgb')
-system(['epstopdf ' figFileName]);
-system(['rm ' figFileName]);
-
+if ~isempty(filename)
+    figFileName = ['figures/diagnostics/' strrep(strrep(figName,' ','_'),'s.hdf5','') 'lengths.eps'];
+    exportfig(skelLengthFig,figFileName,'Color','rgb')
+    system(['epstopdf ' figFileName]);
+    system(['rm ' figFileName]);
+end
 close(skelLengthFig)
 
 end

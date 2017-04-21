@@ -61,31 +61,25 @@ for numCtr = 1:length(wormnums)
                 %% filter data
                 % filter by blob size and intensity
                 if contains(filename,'55')||contains(filename,'54')
-                    intensityThreshold = 70;
+                    intensityThreshold = 80;
                 else
-                    intensityThreshold = 35;
+                    intensityThreshold = 40;
                 end
-                trajData.filtered = (blobFeats.area*pixelsize^2<=maxBlobSize)&...
-                    (blobFeats.intensity_mean>=intensityThreshold)&...
-                    logical(trajData.is_good_skel);
+                trajData.filtered = filterIntensityAndSize(blobFeats,pixelsize,...
+                    intensityThreshold,maxBlobSize,plotDiagnostics,...
+                    [strain ' ' wormnum ' ' strrep(filename(end-31:end-5),'/','')]);
                 % filter by skeleton length
-                if plotDiagnostics
-                    plotSkelLengthDist(skelData(:,:,trajData.filtered),pixelsize,...
-                        minSkelLength,maxSkelLength,...
-                        [strain '_' wormnum '_' strrep(filename(end-31:end),'/','')]);
-                end
-                skelLengths = sum(sqrt(sum((diff(skelData,1,2)*pixelsize).^2)));
-                trajData.filtered(skelLengths>maxSkelLength|skelLengths<minSkelLength)...
-                    = false;
+                trajData.filtered = trajData.filtered&logical(trajData.is_good_skel)...
+                    &filterSkelLength(skelData,pixelsize,minSkelLength,maxSkelLength,plotDiagnostics,...
+                    [strain '_' wormnum '_' strrep(filename(end-31:end-5),'/','')]);
                 % load skeleton data
                 if strcmp(wormnum,'1W')
                     skeleta{fileCtr} = skelData(:,:,trajData.filtered);
                 else % if it is multiworm data, we need to filter for worms in clusters
                     framesAnalyzed = unique(trajData.frame_number(trajData.filtered));
-                    numFrames = numel(framesAnalyzed);
                     % filter green channel by blob size and intensity
-                    trajData_g.filtered = (blobFeats_g.area*pixelsize^2<=maxBlobSize_g)&...
-                        (blobFeats_g.intensity_mean>=intensityThresholds_g(numCtr));
+                    trajData_g.filtered = filterIntensityAndSize(blobFeats_g,pixelsize,...
+                    intensityThresholds_g(numCtr),maxBlobSize_g);
                     % filter for in-cluster
                     num_close_neighbours_rg = h5read(filename,'/num_close_neighbours_rg');
                     trajData.filtered = num_close_neighbours_rg>=minNumNeighbours;
