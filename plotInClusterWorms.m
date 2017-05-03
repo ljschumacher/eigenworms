@@ -5,7 +5,7 @@ clear
 % specify data sets
 strains = {'npr1','N2'};
 wormnums = {'40','HD'};
-numFramesSampled = 25; % how many frames to randomly sample per file
+numFramesSampled = 30; % how many frames to randomly sample per file
 
 % set parameters for filtering data
 neighbourCutOff = 500; % distance in microns to consider a neighbour close
@@ -49,33 +49,37 @@ for numCtr = 1:length(wormnums)
                 % filter green channel by blob size and intensity
                 trajData_g.filtered = (blobFeats_g.area*pixelsize^2<=maxBlobSize_g)&...
                     (blobFeats_g.intensity_mean>=intensityThresholds_g(numCtr));
-                %            % filter for in-cluster
-                %            num_close_neighbours_rg = h5read(filename,'/num_close_neighbours_rg');
-                %            trajData.filtered = num_close_neighbours_rg>=minNumNeighbours;
+                % filter for in-cluster
+                num_close_neighbours_rg = h5read(filename,'/num_close_neighbours_rg');
+                trajData.filtered = num_close_neighbours_rg>=minNumNeighbours;
                 % plot sample data
                 framesAnalyzed = randsample(unique(trajData.frame_number(trajData.filtered)),numFramesSampled);
                 for frameCtr = 1:numFramesSampled
                     frame=framesAnalyzed(frameCtr);
-                    % plot green worms
-                    subplot(5,5,frameCtr)
-                    frameIdcs = trajData_g.frame_number==frame&trajData_g.filtered;
-                    plot(trajData_g.coord_x(frameIdcs),trajData_g.coord_y(frameIdcs),...
-                        'r^','MarkerSize',5,'MarkerFaceColor','r')
-                    hold on
+                    subplot(5,6,frameCtr)
                     % plot red worm
-                    frameIdcs = trajData.frame_number==frame&trajData.filtered;
-                    if nnz(frameIdcs)>1 % plot only one red worm if multiple present
-                        frameIdcs = frameIdcs(randsample(find(frameIdcs),1));
+                    frameIdcs_worm = trajData.frame_number==frame&trajData.filtered;
+                    if nnz(frameIdcs_worm)>1 % plot only one red worm if multiple present
+                        frameIdcs_worm = frameIdcs_worm(randsample(find(frameIdcs_worm),1));
                     end
-                    plot(squeeze(skelData(1,:,frameIdcs)),squeeze(skelData(2,:,frameIdcs)),...
-                        'LineWidth',5)
+                    worm_xcoords = squeeze(skelData(1,:,frameIdcs_worm));
+                    worm_ycoords = squeeze(skelData(2,:,frameIdcs_worm));
+                    plot(worm_xcoords,worm_ycoords,'LineWidth',5)
+                    hold on
+                    % plot green worms
+                    frameIdcs_pharynx = trajData_g.frame_number==frame&trajData_g.filtered;
+                    plot(trajData_g.coord_x(frameIdcs_pharynx),trajData_g.coord_y(frameIdcs_pharynx),...
+                        'r^','MarkerSize',5,'MarkerFaceColor','r')                    
                     axis equal
-                    %%% plot circle of radius 500 around each worm
-                    %%% plot worms behind pharynxes...
+                    % plot circle of radius neighbourCutOff around each worm
+                    viscircles([trajData.coord_x(frameIdcs_worm) trajData.coord_y(frameIdcs_worm)],...
+                        neighbourCutOff/pixelsize,'LineStyle','--','Color',0.5*[1 1 1],'EnhanceVisibility',false)
                     %%% make separate plots for worms in clusters / lone
-                    xlim([-500 500]/pixelsize + trajData.coord_x(frameIdcs))
-                    ylim([-500 500]/pixelsize + trajData.coord_y(frameIdcs))
-                    set(gca,'visible','off')
+                    ax = gca;
+                    xlim([-500 500]/pixelsize + trajData.coord_x(frameIdcs_worm))
+                    ylim([-500 500]/pixelsize + trajData.coord_y(frameIdcs_worm))
+                    set(ax,'visible','off')
+                    ax.Position = ax.Position.*[1 1 1.2 1.2]; % reduce whitespace btw subplots
                 end
                 1;
             else
