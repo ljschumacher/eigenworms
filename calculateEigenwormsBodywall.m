@@ -14,19 +14,17 @@ load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
 showPlots = true;
-plotDiagnostics = true;
+plotDiagnostics = false;
 nEigenworms = 6;
 
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
-neighbourCutOff = 500; % distance in microns to consider a neighbour close
-minNumNeighbours = 3;
+neighbrCutOff = 500; % distance in microns to consider a neighbr close
+minNumNeighbrs = 3;
 strains = {'npr1','N2'};
 wormnums = {'40','HD','1W'};
 maxBlobSize = 2.5e5;
-maxBlobSize_g = 1e4;
 minSkelLength = 850;
 maxSkelLength = 1500;
-intensityThresholds_g = [60, 40, NaN];
 
 for numCtr = 1:length(wormnums)
     wormnum = wormnums{numCtr};
@@ -37,27 +35,17 @@ for numCtr = 1:length(wormnums)
         % not all results may be present, so check how many
         filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
         numFiles = length(filenames);
-        if ~strcmp(wormnum,'1W')
-            filenames_g = importdata(['datalists/' strains{strainCtr} '_' wormnum '_g_list.txt']);
-        else
-            filenames_g = {};
-        end
         % allocate variables
         skeleta = cell(numFiles,1);
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
         for fileCtr=1:numFiles % can be parfor
             filename = filenames{fileCtr};
-            if ~strcmp(wormnum,'1W'), filename_g = filenames_g{fileCtr}; end
-            if exist(filename,'file')&&(strcmp(wormnum,'1W')||exist(filename_g,'file'))
+            if exist(filename,'file')
                 frameRate = h5readatt(filename,'/plate_worms','expected_fps');
                 blobFeats = h5read(filename,'/blob_features');
                 trajData = h5read(filename,'/trajectories_data');
                 skelData = h5read(filename,'/skeleton');
-                if ~strcmp(wormnum,'1W')
-                    trajData_g = h5read(filename_g,'/trajectories_data');
-                    blobFeats_g = h5read(filename_g,'/blob_features');
-                end
                 %% filter data
                 % filter by blob size and intensity
                 if contains(filename,'55')||contains(filename,'54')
@@ -76,14 +64,11 @@ for numCtr = 1:length(wormnums)
                 if strcmp(wormnum,'1W')
                     skeleta{fileCtr} = skelData(:,:,trajData.filtered);
                 else % if it is multiworm data, we need to filter for worms in clusters
-                    framesAnalyzed = unique(trajData.frame_number(trajData.filtered));
-                    % filter green channel by blob size and intensity
-                    trajData_g.filtered = filterIntensityAndSize(blobFeats_g,pixelsize,...
-                    intensityThresholds_g(numCtr),maxBlobSize_g);
                     % filter for in-cluster
-                    num_close_neighbours_rg = h5read(filename,'/num_close_neighbours_rg');
-                    trajData.filtered = num_close_neighbours_rg>=minNumNeighbours;
+                    num_close_neighbrs_rg = h5read(filename,'/num_close_neighbrs_rg');
+                    trajData.filtered = trajData.filtered&num_close_neighbrs_rg'>=minNumNeighbrs;
                     skeleta{fileCtr} = skelData(:,:,trajData.filtered);
+                    assert(~any(isnan(skeleta{fileCtr}(:))))
                 end
             else
                 warning(['Not all necessary tracking results present for ' filename ])

@@ -8,8 +8,8 @@ wormnums = {'40','HD'};
 numFramesSampled = 30; % how many frames to randomly sample per file
 
 % set parameters for filtering data
-neighbourCutOff = 500; % distance in microns to consider a neighbour close
-minNumNeighbours = 3;
+neighbrCutOff = 500; % distance in microns to consider a neighbr close
+minNumNeighbrs = 3;
 maxBlobSize = 2.5e5;
 maxBlobSize_g = 1e4;
 minSkelLength = 850;
@@ -50,8 +50,8 @@ for numCtr = 1:length(wormnums)
                 trajData_g.filtered = (blobFeats_g.area*pixelsize^2<=maxBlobSize_g)&...
                     (blobFeats_g.intensity_mean>=intensityThresholds_g(numCtr));
                 % filter for in-cluster
-                num_close_neighbours_rg = h5read(filename,'/num_close_neighbours_rg');
-                trajData.filtered = num_close_neighbours_rg>=minNumNeighbours;
+                num_close_neighbrs_rg = h5read(filename,'/num_close_neighbrs_rg')';
+                trajData.filtered = num_close_neighbrs_rg>=minNumNeighbrs;
                 % plot sample data
                 framesAnalyzed = randsample(unique(trajData.frame_number(trajData.filtered)),numFramesSampled);
                 for frameCtr = 1:numFramesSampled
@@ -71,9 +71,9 @@ for numCtr = 1:length(wormnums)
                     plot(trajData_g.coord_x(frameIdcs_pharynx),trajData_g.coord_y(frameIdcs_pharynx),...
                         'r^','MarkerSize',5,'MarkerFaceColor','r')                    
                     axis equal
-                    % plot circle of radius neighbourCutOff around each worm
+                    % plot circle of radius neighbrCutOff around each worm
                     viscircles([trajData.coord_x(frameIdcs_worm) trajData.coord_y(frameIdcs_worm)],...
-                        neighbourCutOff/pixelsize,'LineStyle','--','Color',0.5*[1 1 1],'EnhanceVisibility',false)
+                        neighbrCutOff/pixelsize,'LineStyle','--','Color',0.5*[1 1 1],'EnhanceVisibility',false)
                     %%% make separate plots for worms in clusters / lone
                     ax = gca;
                     xlim([-500 500]/pixelsize + trajData.coord_x(frameIdcs_worm))

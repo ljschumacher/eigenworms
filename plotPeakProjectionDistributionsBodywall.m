@@ -12,7 +12,7 @@ exportOptions = struct('Color','rg');
 
 numEigenworms = 4; % number of projections to plot
 
-minNumNeighbours = 3;
+minNumNeighbrs = 3;
 strains = {'npr1','N2'};
 wormnums = {'40','HD','1W'};
 intensityThresholds_g = [60, 40, NaN];
@@ -28,7 +28,7 @@ for numCtr = 1:length(wormnums)
         filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
         numFiles = length(filenames);
         if ~strcmp(wormnum,'1W')
-            filenames_g = importdata([strains{strainCtr} '_' wormnum '_g_list.txt']);
+            filenames_g = importdata(['datalists/' strains{strainCtr} '_' wormnum '_g_list.txt']);
         else
             filenames_g = {};
         end
@@ -51,8 +51,8 @@ for numCtr = 1:length(wormnums)
                     intensityThresholds_g(numCtr),maxBlobSize_g);
                 end
                 if ~strcmp(wormnum,'1W') % if it is multiworm data, we need to filter for worms in clusters
-                    num_close_neighbours_rg = h5read(filename,'/num_close_neighbours_rg');
-                    inCluster = num_close_neighbours_rg>=minNumNeighbours;
+                    num_close_neighbrs_rg = h5read(filename,'/num_close_neighbrs_rg');
+                    inCluster = num_close_neighbrs_rg>=minNumNeighbrs;
                     features.filtered = ismember(features.skeleton_id+1,find(inCluster));
                 else
                     features.filtered = true(size(features.timestamp));
