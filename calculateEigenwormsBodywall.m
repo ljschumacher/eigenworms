@@ -65,8 +65,8 @@ for numCtr = 1:length(wormnums)
                     skeleta{fileCtr} = skelData(:,:,trajData.filtered);
                 else % if it is multiworm data, we need to filter for worms in clusters
                     % filter for in-cluster
-                    num_close_neighbrs_rg = h5read(filename,'/num_close_neighbrs_rg');
-                    trajData.filtered = trajData.filtered&num_close_neighbrs_rg'>=minNumNeighbrs;
+                    num_close_neighbrs_rg = h5read(filename,'/num_close_neighbrs_rg')';
+                    trajData.filtered = trajData.filtered&num_close_neighbrs_rg>=minNumNeighbrs;
                     skeleta{fileCtr} = skelData(:,:,trajData.filtered);
                     assert(~any(isnan(skeleta{fileCtr}(:))))
                 end
