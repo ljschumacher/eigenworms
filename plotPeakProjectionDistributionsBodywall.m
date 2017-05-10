@@ -15,8 +15,7 @@ numEigenworms = 4; % number of projections to plot
 minNumNeighbrs = 3;
 strains = {'npr1','N2'};
 wormnums = {'40','HD','1W'};
-intensityThresholds_g = [60, 40, NaN];
-
+intensityThresholds_g = containers.Map({'40','HD','1W'},{60, 40, 100});
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 maxBlobSize_g = 1e4; % for filtering green channel worms
 
@@ -25,8 +24,8 @@ for numCtr = 1:length(wormnums)
     for strainCtr = 1:length(strains)
         strain = strains{strainCtr};
         %% load data
-        filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
-        numFiles = length(filenames);
+        filenames_r = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
+        numFiles = length(filenames_r);
         if ~strcmp(wormnum,'1W')
             filenames_g = importdata(['datalists/' strains{strainCtr} '_' wormnum '_g_list.txt']);
         else
@@ -37,22 +36,22 @@ for numCtr = 1:length(wormnums)
         peakProjections3 = cell(numFiles,1);
         peakProjections4 = cell(numFiles,1);
         for fileCtr = 1:numFiles
-            filename = filenames{fileCtr};
+            filename_r = filenames_r{fileCtr};
             if ~strcmp(wormnum,'1W'), filename_g = filenames_g{fileCtr}; end
-            if exist(strrep(filename,'skeletons','features'),'file')&&exist(filename,'file')...
+            if exist(strrep(filename_r,'skeletons','features'),'file')&&exist(filename_r,'file')...
                     &&(strcmp(wormnum,'1W')||exist(filename_g,'file'))
-                features = h5read(strrep(filename,'skeletons','features'),'/features_timeseries');
-                trajData = h5read(filename,'/trajectories_data');
+                features = h5read(strrep(filename_r,'skeletons','features'),'/features_timeseries');
+                trajData = h5read(filename_r,'/trajectories_data');
                 if ~strcmp(wormnum,'1W')
                     trajData_g = h5read(filename_g,'/trajectories_data');
                     blobFeats_g = h5read(filename_g,'/blob_features');
                     % filter green channel by blob size and intensity
                     trajData_g.filtered = filterIntensityAndSize(blobFeats_g,pixelsize,...
-                    intensityThresholds_g(numCtr),maxBlobSize_g);
+                    intensityThresholds_g(wormnum),maxBlobSize_g);
                 end
                 if ~strcmp(wormnum,'1W') % if it is multiworm data, we need to filter for worms in clusters
-                    num_close_neighbrs_rg = h5read(filename,'/num_close_neighbrs_rg');
-                    inCluster = num_close_neighbrs_rg>=minNumNeighbrs;
+                    num_close_neighbrs = h5read(filename_r,'/num_close_neighbrs');
+                    inCluster = num_close_neighbrs>=minNumNeighbrs;
                     features.filtered = ismember(features.skeleton_id+1,find(inCluster));
                 else
                     features.filtered = true(size(features.timestamp));
@@ -78,10 +77,10 @@ for numCtr = 1:length(wormnums)
                         features.eigen_projection_4(features.filtered),'MinPeakProminence',0.5);
                         -findpeaks(-features.eigen_projection_4(features.filtered),'MinPeakProminence',0.5)];
                 else
-                    warning(['All worms filtered out for ' filename ])
+                    warning(['All worms filtered out for ' filename_r ])
                 end
             else
-                warning(['Not all necessary tracking results present for ' filename ])
+                warning(['Not all necessary tracking results present for ' filename_r ])
             end
         end
         % pool data from multiple recordings

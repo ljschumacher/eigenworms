@@ -49,12 +49,12 @@ for numCtr = 1:length(wormnums)
                 %% filter data
                 % filter by blob size and intensity
                 if contains(filename,'55')||contains(filename,'54')
-                    intensityThreshold = 80;
+                    intensityThreshold_r = 80;
                 else
-                    intensityThreshold = 40;
+                    intensityThreshold_r = 40;
                 end
                 trajData.filtered = filterIntensityAndSize(blobFeats,pixelsize,...
-                    intensityThreshold,maxBlobSize,plotDiagnostics,...
+                    intensityThreshold_r,maxBlobSize,plotDiagnostics,...
                     [strain ' ' wormnum ' ' strrep(filename(end-31:end-5),'/','')]);
                 % filter by skeleton length
                 trajData.filtered = trajData.filtered&logical(trajData.is_good_skel)...
@@ -65,8 +65,8 @@ for numCtr = 1:length(wormnums)
                     skeleta{fileCtr} = skelData(:,:,trajData.filtered);
                 else % if it is multiworm data, we need to filter for worms in clusters
                     % filter for in-cluster
-                    num_close_neighbrs_rg = h5read(filename,'/num_close_neighbrs_rg')';
-                    trajData.filtered = trajData.filtered&num_close_neighbrs_rg>=minNumNeighbrs;
+                    num_close_neighbrs = h5read(filename,'/num_close_neighbrs')';
+                    trajData.filtered = trajData.filtered&num_close_neighbrs>=minNumNeighbrs;
                     skeleta{fileCtr} = skelData(:,:,trajData.filtered);
                     assert(~any(isnan(skeleta{fileCtr}(:))))
                 end
