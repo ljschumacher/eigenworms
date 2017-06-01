@@ -20,6 +20,7 @@ nEigenworms = 6;
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 neighbrCutOff = 500; % distance in microns to consider a neighbr close
 minNumNeighbrs = 3;
+minNeighbrDist = 1500;
 strains = {'npr1','N2'};
 wormnums = {'40','HD','1W'};
 maxBlobSize = 2.5e5;
@@ -36,7 +37,11 @@ for numCtr = 1:length(wormnums)
         filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
         numFiles = length(filenames);
         % allocate variables
-        skeleta = cell(numFiles,1);
+        skeletaLoneWorms = cell(numFiles,1);
+        if ~strcmp(wormnum,'1W')
+            skeletaInCluster = cell(numFiles,1);
+            skeletaSmallCluster = cell(numFiles,1);
+        end
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
         for fileCtr=1:numFiles % can be parfor
@@ -62,54 +67,99 @@ for numCtr = 1:length(wormnums)
                     [strain '_' wormnum '_' strrep(filename(end-31:end-5),'/','')]);
                 % load skeleton data
                 if strcmp(wormnum,'1W')
-                    skeleta{fileCtr} = skelData(:,:,trajData.filtered);
+                    skeletaLoneWorms{fileCtr} = skelData(:,:,trajData.filtered);
                 else % if it is multiworm data, we need to filter for worms in clusters
-                    % filter for in-cluster
-                    num_close_neighbrs = h5read(filename,'/num_close_neighbrs')';
-                    trajData.filtered = trajData.filtered&num_close_neighbrs>=minNumNeighbrs;
-                    skeleta{fileCtr} = skelData(:,:,trajData.filtered);
-                    assert(~any(isnan(skeleta{fileCtr}(:))))
+                    % filter for in-cluster etc
+                    min_neighbr_dist = h5read(filename,'/min_neighbr_dist');
+                    num_close_neighbrs = h5read(filename,'/num_close_neighbrs');
+                    neighbr_dist = h5read(filename,'/neighbr_distances');
+                    loneWorms = min_neighbr_dist>=minNeighbrDist;
+                    inCluster = num_close_neighbrs>=minNumNeighbrs;
+                    smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
+                        |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
+                        |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
+                    % load skeletal data and check it's not NaN
+                    skeletaLoneWorms{fileCtr} = skelData(:,:,trajData.filtered&loneWorms);
+                    skeletaInCluster{fileCtr} = skelData(:,:,trajData.filtered&inCluster);
+                    skeletaSmallCluster{fileCtr} = skelData(:,:,trajData.filtered&smallCluster);
+                    assert(~any(isnan(skeletaInCluster{fileCtr}(:))))
+                    assert(~any(isnan(skeletaSmallCluster{fileCtr}(:))))
                 end
+                assert(~any(isnan(skeletaLoneWorms{fileCtr}(:))))
             else
                 warning(['Not all necessary tracking results present for ' filename ])
             end
         end
         % pool data from multiple recordings
-        skeleta = cat(3,skeleta{:});
-        % randomly pick numFrames from the data, to not oversample
-        if numSamples<=size(skeleta,3)
-            [skeleta, framesSampled] = datasample(skeleta,numSamples,3,'Replace',false);
-        else
-            warning('not enough skeleta to sample form')
+        skeletaLoneWorms = cat(3,skeletaLoneWorms{:});
+        if ~strcmp(wormnum,'1W')
+            skeletaInCluster = cat(3,skeletaInCluster{:});
+            skeletaSmallCluster = cat(3,skeletaSmallCluster{:});
         end
-        % create angle arrays from skeleta
-        [angleArray, ~] = makeAngleArrayV(squeeze(skeleta(1,:,:))',squeeze(skeleta(2,:,:))');
-        
+        % randomly pick numFrames from the data, to not oversample, and create angle arrays from skeleta
+        if numSamples<=size(skeletaLoneWorms,3)
+            [skeletaLoneWorms, ~] = datasample(skeletaLoneWorms,numSamples,3,'Replace',false);
+        else
+            warning('not enough lone worm skeleta to sample from')
+        end
+        [angleArrayLoneWorms, ~] = makeAngleArrayV(squeeze(skeletaLoneWorms(1,:,:))',squeeze(skeletaLoneWorms(2,:,:))');
+        clear skeletaLoneWorms % free some memory
+        if ~strcmp(wormnum,'1W')
+            if numSamples<=size(skeletaInCluster,3)
+                [skeletaInCluster, ~] = datasample(skeletaInCluster,numSamples,3,'Replace',false);
+            else
+                warning('not enough in cluster worm skeleta to sample from')
+            end
+            [angleArrayInCluster, ~] = makeAngleArrayV(squeeze(skeletaInCluster(1,:,:))',squeeze(skeletaInCluster(2,:,:))');
+            clear skeletaInCluster % free some memory
+            if numSamples<=size(skeletaSmallCluster,3)
+                [skeletaSmallCluster, ~] = datasample(skeletaSmallCluster,numSamples,3,'Replace',false);
+            else
+                warning('not enough small cluster skeleta to sample from')
+            end
+            [angleArraySmallCluster, ~] = makeAngleArrayV(squeeze(skeletaSmallCluster(1,:,:))',squeeze(skeletaSmallCluster(2,:,:))');
+            clear skeletaSmallCluster % free some memory
+        end
         %% find eigenworms
-        [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
-        % save projections onto reduced dimensions, also for reference
-        % components and calc variance explained by reference comps
-        eigenProjections = projectOnEigenWormsV(eigenWorms, angleArray, nEigenworms);
-        varExplained = eigenVals/sum(var(angleArray));
-        masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
-        masterEigVals = diag(masterWorms(1:nEigenworms,:)*cov(angleArray,0,'omitrows')...
-            /masterWorms(1:nEigenworms,:));
-        masterVarExplained = masterEigVals/sum(var(angleArray));
-        % save eigenWorms, eigenVals and first few projections
-        save(['results/eigenData_' strain '_' wormnum '_bodywall.mat'],'eigenWorms',...
-            'eigenVals','eigenProjections','varExplained','masterProjections',...
-            'masterVarExplained','numFiles','numSamples')
-        if showPlots
-            % save plots
-            figName = [strain '_' wormnum ];
-            figPrefix = {'var','eig','cov','eigenValueDistribution'};
-            for figCtr = 1:4
-                set(figure(figCtr),'name',[figPrefix{figCtr} '_' figName ...
-                    '_' num2str(numFiles) 'datasets_' num2str(size(angleArray,1),2) 'frames'])
-                figFileName = ['figures/diagnostics/' figPrefix{figCtr} '_' figName '.eps'];
-                exportfig(figure(figCtr),figFileName,exportOptions)
-                system(['epstopdf ' figFileName]);
-                system(['rm ' figFileName]);
+        if ~strcmp(wormnum,'1W')
+            analysisTypes = {'loneWorms','inCluster','smallCluster'};
+        else
+            analysisTypes = {'loneWorms'};
+        end
+        for analysisType = analysisTypes
+            switch analysisType{1}
+                case 'loneWorms'
+                    angleArray = angleArrayLoneWorms;
+                case 'inCluster'
+                    angleArray = angleArrayInCluster;
+                case 'smallCluster'
+                    angleArray = angleArraySmallCluster;
+            end
+            [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
+            % save projections onto reduced dimensions, also for reference
+            % components and calc variance explained by reference comps
+            eigenProjections = projectOnEigenWormsV(eigenWorms, angleArray, nEigenworms);
+            varExplained = eigenVals/sum(var(angleArray));
+            masterProjections = projectOnEigenWormsV(masterWorms, angleArray, nEigenworms);
+            masterEigVals = diag(masterWorms(1:nEigenworms,:)*cov(angleArray,0,'omitrows')...
+                /masterWorms(1:nEigenworms,:));
+            masterVarExplained = masterEigVals/sum(var(angleArray));
+            % save eigenWorms, eigenVals and first few projections
+            save(['results/eigenData_' strain '_' wormnum '_bodywall_' analysisType{1} '.mat'],'eigenWorms',...
+                'eigenVals','eigenProjections','varExplained','masterProjections',...
+                'masterVarExplained','numFiles','numSamples')
+            if showPlots
+                % save plots
+                figName = [strain '_' wormnum ];
+                figPrefix = {'var','eig','cov','eigenValueDistribution'};
+                for figCtr = 1:4
+                    set(figure(figCtr),'name',[figPrefix{figCtr} ' ' figName ...
+                        ' '  analysisType{1} ' ' num2str(numFiles) ' datasets ' num2str(size(angleArray,1),2) 'frames'])
+                    figFileName = ['figures/diagnostics/' figPrefix{figCtr} '_' analysisType{1} '_' figName '.eps'];
+                    exportfig(figure(figCtr),figFileName,exportOptions)
+                    system(['epstopdf ' figFileName]);
+                    system(['rm ' figFileName]);
+                end
             end
         end
     end
