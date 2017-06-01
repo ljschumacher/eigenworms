@@ -100,7 +100,7 @@ for numCtr = 1:length(wormnums)
         if numSamples<=size(skeletaLoneWorms,3)
             [skeletaLoneWorms, ~] = datasample(skeletaLoneWorms,numSamples,3,'Replace',false);
         else
-            warning('not enough lone worm skeleta to sample from')
+            warning(['not enough lone worm skeleta to sample from for ' wormnum ' ' strain])
         end
         [angleArrayLoneWorms, ~] = makeAngleArrayV(squeeze(skeletaLoneWorms(1,:,:))',squeeze(skeletaLoneWorms(2,:,:))');
         clear skeletaLoneWorms % free some memory
@@ -108,14 +108,14 @@ for numCtr = 1:length(wormnums)
             if numSamples<=size(skeletaInCluster,3)
                 [skeletaInCluster, ~] = datasample(skeletaInCluster,numSamples,3,'Replace',false);
             else
-                warning('not enough in cluster worm skeleta to sample from')
+                warning(['not enough in cluster worm skeleta to sample from for ' wormnum ' ' strain])
             end
             [angleArrayInCluster, ~] = makeAngleArrayV(squeeze(skeletaInCluster(1,:,:))',squeeze(skeletaInCluster(2,:,:))');
             clear skeletaInCluster % free some memory
             if numSamples<=size(skeletaSmallCluster,3)
                 [skeletaSmallCluster, ~] = datasample(skeletaSmallCluster,numSamples,3,'Replace',false);
             else
-                warning('not enough small cluster skeleta to sample from')
+                warning(['not enough small cluster skeleta to sample from for ' wormnum ' ' strain])
             end
             [angleArraySmallCluster, ~] = makeAngleArrayV(squeeze(skeletaSmallCluster(1,:,:))',squeeze(skeletaSmallCluster(2,:,:))');
             clear skeletaSmallCluster % free some memory
@@ -154,7 +154,7 @@ for numCtr = 1:length(wormnums)
                 figPrefix = {'var','eig','cov','eigenValueDistribution'};
                 for figCtr = 1:4
                     set(figure(figCtr),'name',[figPrefix{figCtr} ' ' figName ...
-                        ' '  analysisType{1} ' ' num2str(numFiles) ' datasets ' num2str(size(angleArray,1),2) 'frames'])
+                        ' '  analysisType{1} ' ' num2str(numFiles) ' datasets ' num2str(size(angleArray,1),2) ' frames'])
                     figFileName = ['figures/diagnostics/' figPrefix{figCtr} '_' analysisType{1} '_' figName '.eps'];
                     exportfig(figure(figCtr),figFileName,exportOptions)
                     system(['epstopdf ' figFileName]);
