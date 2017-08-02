@@ -16,7 +16,7 @@ minNumNeighbrs = 3;
 minNeighbrDist = 1500;
 strains = {'N2','npr1'};
 wormnums = {'40','HD'};
-analysisTypes = {'loneWorms','inCluster','smallCluster'};
+analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 
 for numCtr = 1:length(wormnums)
@@ -37,23 +37,33 @@ for numCtr = 1:length(wormnums)
                 if exist(strrep(filename_r,'skeletons','features'),'file')&&exist(filename_r,'file')
                     features = h5read(strrep(filename_r,'skeletons','features'),'/features_timeseries');
                     trajData = h5read(filename_r,'/trajectories_data');
-                        % filter for in-cluster etc
-                        min_neighbr_dist = h5read(filename_r,'/min_neighbr_dist');
-                        num_close_neighbrs = h5read(filename_r,'/num_close_neighbrs');
-                        neighbr_dist = h5read(filename_r,'/neighbr_distances');
-                        loneWorms = min_neighbr_dist>=minNeighbrDist;
-                        inCluster = num_close_neighbrs>=minNumNeighbrs;
-                        smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
-                            |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
-                            |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
-                        switch analysisType{1}
-                            case 'loneWorms'
-                                features.filtered = ismember(features.skeleton_id+1,find(loneWorms));
-                            case 'inCluster'
-                                features.filtered = ismember(features.skeleton_id+1,find(inCluster));
-                            case 'smallCluster'
-                                features.filtered = ismember(features.skeleton_id+1,find(smallCluster));
-                        end
+                    frameRate = h5readatt(filename_r,'/plate_worms','expected_fps');
+                    % filter for in-cluster etc
+                    min_neighbr_dist = h5read(filename_r,'/min_neighbr_dist');
+                    num_close_neighbrs = h5read(filename_r,'/num_close_neighbrs');
+                    neighbr_dist = h5read(filename_r,'/neighbr_distances');
+                    loneWorms = min_neighbr_dist>=minNeighbrDist;
+                    inCluster = num_close_neighbrs>=minNumNeighbrs;
+                    smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
+                        |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
+                        |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
+                    leaveCluster = [false; inCluster(1:end-1)&~inCluster(2:end)];
+                    % add 5 more second after each leaving event
+                    leaveClusterExtended = unique(find(leaveCluster) + [0:5*double(frameRate)]);
+                    leaveClusterExtended = leaveClusterExtended(leaveClusterExtended<numel(leaveCluster)); % exclude frames beyond highest frame number
+                    leaveCluster(leaveClusterExtended) = true;
+                    leaveCluster(inCluster) = false; % exclude times when worm moved back
+                    leaveCluster(loneWorms)=false; % exclude worms that have become lone worm
+                    switch analysisType{1}
+                        case 'loneWorms'
+                            features.filtered = ismember(features.skeleton_id+1,find(loneWorms));
+                        case 'inCluster'
+                            features.filtered = ismember(features.skeleton_id+1,find(inCluster));
+                        case 'smallCluster'
+                            features.filtered = ismember(features.skeleton_id+1,find(smallCluster));
+                        case 'leaveCluster'
+                            features.filtered = ismember(features.skeleton_id+1,find(leaveCluster));
+                    end
                     %% find peaks and troughs in eigenworm projections
                     % exclude when the worm index changes, to break continuity of time series
                     features.filtered(diff(features.worm_index)~=0) = false;
@@ -121,4 +131,4 @@ for numCtr = 1:length(wormnums)
     system(['epstopdf ' figFileName]);
     system(['rm ' figFileName]);
 end
-tilefigs()
+%tilefigs()
