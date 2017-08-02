@@ -5,13 +5,19 @@
 close all
 clear
 
+% specify whether to phase-restrict
+phase = 'stationary'; % 'fullMovie' or 'stationary'
+
 % figure export options
 exportOptions = struct('Color','rgb');
 
 nEigenworms = 4;
 strains = {'N2', 'npr1'};
 nStrains = length(strains);
-wormnums = {'HD','40','1W'};
+wormnums = {'HD', '40', '1W'};
+if strcmp(phase, 'stationary')
+    wormnums = {'40'};
+end
 analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};
 nVariations = 5;
 weights = linspace(-1,1,nVariations)';
@@ -25,7 +31,7 @@ for strainCtr = 1:nStrains
         for dataCtr = 1:length(analysisTypes)
             analysisType = analysisTypes{dataCtr};
             % load eigenworm data
-            file = rdir(['results/eigenData_' S '_' N '_bodywall_' analysisType '.mat']);
+            file = rdir(['results/eigenData_' S '_' N '_bodywall_' analysisType '_' phase '.mat']);
             if ~isempty(file)
                 % load eigenworm analysis result
                 load(file.name,'eigenWorms','eigenProjections')
@@ -53,7 +59,7 @@ for strainCtr = 1:nStrains
         end
         % annotate and save figure
         set(eigWormFig, 'name', ['Strain ' S ' ' N ' eigenworms'])
-        figFileName = ['figures/eigenworms_variation_' S '_' N '.eps'];
+        figFileName = ['figures/eigenworms_variation_' S '_' N '_' phase '.eps'];
         exportfig(eigWormFig,figFileName,exportOptions)
         system(['epstopdf ' figFileName]);
         system(['rm ' figFileName]);

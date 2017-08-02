@@ -2,6 +2,9 @@ clear
 % issues/todo:
 % - parfor does not properly work for case wormnum 1W
 
+% specify whether to phase-restrict
+phase = 'fullMovie'; % 'fullMovie' or 'stationary'
+
 % figure export options
 exportOptions = struct('Color','rgb');
 
@@ -22,7 +25,11 @@ neighbrCutOff = 500; % distance in microns to consider a neighbr close
 minNumNeighbrs = 3;
 minNeighbrDist = 1500;
 strains = {'npr1','N2'};
-wormnums = {'40','HD','1W'};
+wormnums = {'1W','40','HD'};
+if strcmp(phase, 'stationary')
+    wormnums = {'40'};
+end
+
 maxBlobSize = 2.5e5;
 minSkelLength = 850;
 maxSkelLength = 1500;
@@ -34,7 +41,11 @@ for numCtr = 1:length(wormnums)
         close all
         %% load data
         % not all results may be present, so check how many
-        filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
+        if strcmp(phase, 'stationary')
+            [lastFrames,filenames,~] = xlsread(['../trackingAnalysis/datalists/' strains{strainCtr} '_' wormnum '_r_list.xlsx'],1,'A1:B15','basic');
+        else
+            filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
+        end
         numFiles = length(filenames);
         % allocate variables
         skeletaLoneWorms = cell(numFiles,1);
@@ -80,12 +91,18 @@ for numCtr = 1:length(wormnums)
                         |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
                         |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
                     leaveCluster = [false; inCluster(1:end-1)&~inCluster(2:end)];
-                    % add 5 more second after each leaving event
-                    leaveClusterExtended = unique(find(leaveCluster) + [0:5*double(frameRate)]);
+                    leaveClusterExtended = unique(find(leaveCluster) + [0:5*double(frameRate)]);% add 5 more second after each leaving event
                     leaveClusterExtended = leaveClusterExtended(leaveClusterExtended<numel(leaveCluster)); % exclude frames beyond highest frame number
                     leaveCluster(leaveClusterExtended) = true;
                     leaveCluster(inCluster) = false; % exclude times when worm moved back
                     leaveCluster(loneWorms)=false; % exclude worms that have become lone worm
+                    % restrict analysis to stationary phase only
+                    if strcmp(phase,'stationary')
+                        firstFrame = double(round(max(trajData.frame_number)/10)); % define starting frame as 10% into the movie
+                        lastFrame = lastFrames(fileCtr);
+                        phaseFrameLogInd = trajData.frame_number < lastFrame & trajData.frame_number > firstFrame;
+                        trajData.filtered(~phaseFrameLogInd) = false;
+                    end
                     % load skeletal data and check it's not NaN
                     skeletaLoneWorms{fileCtr} = skelData(:,:,trajData.filtered&loneWorms);
                     skeletaInCluster{fileCtr} = skelData(:,:,trajData.filtered&inCluster);
@@ -153,7 +170,7 @@ for numCtr = 1:length(wormnums)
                 case 'smallCluster'
                     angleArray = angleArraySmallCluster;
                 case 'leaveCluster'
-                    angleArray = angleArrayLeaveCluster;    
+                    angleArray = angleArrayLeaveCluster;
             end
             [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
             % save projections onto reduced dimensions, also for reference
@@ -165,12 +182,12 @@ for numCtr = 1:length(wormnums)
                 /masterWorms(1:nEigenworms,:));
             masterVarExplained = masterEigVals/sum(var(angleArray));
             % save eigenWorms, eigenVals and first few projections
-            save(['results/eigenData_' strain '_' wormnum '_bodywall_' analysisType{1} '.mat'],'eigenWorms',...
+            save(['results/eigenData_' strain '_' wormnum '_bodywall_' analysisType{1} '_' phase '.mat'],'eigenWorms',...
                 'eigenVals','eigenProjections','varExplained','masterProjections',...
                 'masterVarExplained','numFiles','numSamples')
             if showPlots
                 % save plots
-                figName = [strain '_' wormnum ];
+                figName = [strain '_' wormnum '_' phase ];
                 figPrefix = {'var','eig','cov','eigenValueDistribution'};
                 for figCtr = 1:4
                     set(figure(figCtr),'name',[figPrefix{figCtr} ' ' figName ...
