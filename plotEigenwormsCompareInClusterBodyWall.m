@@ -11,10 +11,11 @@ nEigenworms = 4;
 strains = {'N2', 'npr1'};
 nStrains = length(strains);
 wormnums = {'HD','40'};
-analysisTypes = {'loneWorms','inCluster','smallCluster'};
+analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};
 
 % for reference, eigenworms from Brown et al. 2013
-reference = load('../Motif_Analysis/eigenWorms.mat');
+reference = load('eigenWorms.mat');
+
 % change the order of first and third masterworm to match ours
 % reference.eigenWorms = reference.eigenWorms([3 2 1 4:end], :);
 
@@ -65,4 +66,4 @@ for strainCtr = 1:nStrains
         system(['rm ' figFileName]);
     end
 end
-tilefigs()
+%tilefigs()

@@ -41,6 +41,7 @@ for numCtr = 1:length(wormnums)
         if ~strcmp(wormnum,'1W')
             skeletaInCluster = cell(numFiles,1);
             skeletaSmallCluster = cell(numFiles,1);
+            skeletaLeaveCluster = cell(numFiles,1);
         end
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
@@ -78,12 +79,21 @@ for numCtr = 1:length(wormnums)
                     smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
                         |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
                         |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
+                    leaveCluster = [false; inCluster(1:end-1)&~inCluster(2:end)];
+                    % add 5 more second after each leaving event
+                    leaveClusterExtended = unique(find(leaveCluster) + [0:5*double(frameRate)]);
+                    leaveClusterExtended = leaveClusterExtended(leaveClusterExtended<numel(leaveCluster)); % exclude frames beyond highest frame number
+                    leaveCluster(leaveClusterExtended) = true;
+                    leaveCluster(inCluster) = false; % exclude times when worm moved back
+                    leaveCluster(loneWorms)=false; % exclude worms that have become lone worm
                     % load skeletal data and check it's not NaN
                     skeletaLoneWorms{fileCtr} = skelData(:,:,trajData.filtered&loneWorms);
                     skeletaInCluster{fileCtr} = skelData(:,:,trajData.filtered&inCluster);
                     skeletaSmallCluster{fileCtr} = skelData(:,:,trajData.filtered&smallCluster);
+                    skeletaLeaveCluster{fileCtr} = skelData(:,:,trajData.filtered&leaveCluster);
                     assert(~any(isnan(skeletaInCluster{fileCtr}(:))))
                     assert(~any(isnan(skeletaSmallCluster{fileCtr}(:))))
+                    assert(~any(isnan(skeletaLeaveCluster{fileCtr}(:))))
                 end
                 assert(~any(isnan(skeletaLoneWorms{fileCtr}(:))))
             else
@@ -95,6 +105,7 @@ for numCtr = 1:length(wormnums)
         if ~strcmp(wormnum,'1W')
             skeletaInCluster = cat(3,skeletaInCluster{:});
             skeletaSmallCluster = cat(3,skeletaSmallCluster{:});
+            skeletaLeaveCluster = cat(3,skeletaLeaveCluster{:});
         end
         % randomly pick numFrames from the data, to not oversample, and create angle arrays from skeleta
         if numSamples<=size(skeletaLoneWorms,3)
@@ -119,10 +130,17 @@ for numCtr = 1:length(wormnums)
             end
             [angleArraySmallCluster, ~] = makeAngleArrayV(squeeze(skeletaSmallCluster(1,:,:))',squeeze(skeletaSmallCluster(2,:,:))');
             clear skeletaSmallCluster % free some memory
+            if numSamples<=size(skeletaLeaveCluster,3)
+                [skeletaLeaveCluster, ~] = datasample(skeletaLeaveCluster,numSamples,3,'Replace',false);
+            else
+                warning(['not enough in cluster worm skeleta to sample from for ' wormnum ' ' strain])
+            end
+            [angleArrayLeaveCluster, ~] = makeAngleArrayV(squeeze(skeletaLeaveCluster(1,:,:))',squeeze(skeletaLeaveCluster(2,:,:))');
+            clear skeletaLeaveCluster % free some memory
         end
         %% find eigenworms
         if ~strcmp(wormnum,'1W')
-            analysisTypes = {'loneWorms','inCluster','smallCluster'};
+            analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};
         else
             analysisTypes = {'loneWorms'};
         end
@@ -134,6 +152,8 @@ for numCtr = 1:length(wormnums)
                     angleArray = angleArrayInCluster;
                 case 'smallCluster'
                     angleArray = angleArraySmallCluster;
+                case 'leaveCluster'
+                    angleArray = angleArrayLeaveCluster;    
             end
             [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
             % save projections onto reduced dimensions, also for reference
