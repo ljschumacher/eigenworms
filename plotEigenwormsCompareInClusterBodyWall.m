@@ -4,13 +4,19 @@
 close all
 clear
 
+% specify whether to phase-restrict
+phase = 'fullMovie'; % 'fullMovie' or 'stationary'
+
 % figure export options
 exportOptions = struct('Color','rgb');
 
 nEigenworms = 4;
 strains = {'N2', 'npr1'};
 nStrains = length(strains);
-wormnums = {'HD','40'};
+wormnums = {'40','HD'};
+if strcmp(phase, 'stationary')
+    wormnums = {'40'};
+end
 analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};
 
 % for reference, eigenworms from Brown et al. 2013
@@ -26,7 +32,7 @@ for strainCtr = 1:nStrains
         eigWormFig = figure;
         for analysisType = analysisTypes
             % load eigenworm data
-            file = rdir(['results/eigenData_' S '_' N '_bodywall_' analysisType{1} '.mat']);
+            file = rdir(['results/eigenData_' S '_' N '_bodywall_' analysisType{1}  '_' phase '.mat']);
             if ~isempty(file)
                 % load eigenworm analysis result
                 load(file.name,'eigenWorms')
@@ -60,7 +66,7 @@ for strainCtr = 1:nStrains
         legH = legend(eigWormFig.Children(1),analysisTypes,'Location','SouthEast');
         %     legH.Title.String = 'N worms';
         set(eigWormFig, 'name', ['Strain ' S ' ' N ' eigenworms'])
-        figFileName = ['figures/eigenworms_compareInCluster_' S '_' N '.eps'];
+        figFileName = ['figures/eigenworms_compareInCluster_' S '_' N '_' phase '.eps'];
         exportfig(eigWormFig,figFileName,exportOptions)
         system(['epstopdf ' figFileName]);
         system(['rm ' figFileName]);
