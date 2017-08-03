@@ -2,8 +2,8 @@ clear
 % issues/todo:
 % - parfor does not properly work for case wormnum 1W
 
-% specify whether to phase-restrict
-phase = 'fullMovie'; % 'fullMovie' or 'stationary'
+% specify how to phase-restrict
+phase = 'joining'; % 'fullMovie', 'joining', or 'sweeping'.
 
 % figure export options
 exportOptions = struct('Color','rgb');
@@ -26,7 +26,7 @@ minNumNeighbrs = 3;
 minNeighbrDist = 1500;
 strains = {'npr1','N2'};
 wormnums = {'1W','40','HD'};
-if strcmp(phase, 'stationary')
+if ~strcmp(phase, 'fullMovie')
     wormnums = {'40'};
 end
 
@@ -41,8 +41,9 @@ for numCtr = 1:length(wormnums)
         close all
         %% load data
         % not all results may be present, so check how many
-        if strcmp(phase, 'stationary')
-            [lastFrames,filenames,~] = xlsread(['../trackingAnalysis/datalists/' strains{strainCtr} '_' wormnum '_r_list.xlsx'],1,'A1:B15','basic');
+        if ~strcmp(phase, 'fullMovie')
+            [phaseFrames,filenames,~] = xlsread(['../trackingAnalysis/datalists/' strains{strainCtr} '_' wormnum '_r_list.xlsx'],1,'A1:E15','basic');
+            phaseFrames = phaseFrames-1; % to correct for python indexing at 0
         else
             filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
         end
@@ -56,6 +57,7 @@ for numCtr = 1:length(wormnums)
         end
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
+        % go through each file
         for fileCtr=1:numFiles % can be parfor
             filename = filenames{fileCtr};
             if exist(filename,'file')
@@ -63,6 +65,16 @@ for numCtr = 1:length(wormnums)
                 blobFeats = h5read(filename,'/blob_features');
                 trajData = h5read(filename,'/trajectories_data');
                 skelData = h5read(filename,'/skeleton');
+                if strcmp(phase, 'fullMovie')
+                    firstFrame = 0;
+                    lastFrame = phaseFrames(fileCtr,4);
+                elseif strcmp(phase,'joining')
+                    firstFrame = phaseFrames(fileCtr,1);
+                    lastFrame = phaseFrames(fileCtr,2);
+                elseif strcmp(phase,'sweeping')
+                    firstFrame = phaseFrames(fileCtr,3);
+                    lastFrame = phaseFrames(fileCtr,4);
+                end
                 %% filter data
                 % filter by blob size and intensity
                 if contains(filename,'55')||contains(filename,'54')
@@ -96,13 +108,9 @@ for numCtr = 1:length(wormnums)
                     leaveCluster(leaveClusterExtended) = true;
                     leaveCluster(inCluster) = false; % exclude times when worm moved back
                     leaveCluster(loneWorms)=false; % exclude worms that have become lone worm
-                    % restrict analysis to stationary phase only
-                    if strcmp(phase,'stationary')
-                        firstFrame = double(round(max(trajData.frame_number)/10)); % define starting frame as 10% into the movie
-                        lastFrame = lastFrames(fileCtr);
-                        phaseFrameLogInd = trajData.frame_number < lastFrame & trajData.frame_number > firstFrame;
-                        trajData.filtered(~phaseFrameLogInd) = false;
-                    end
+                    % apply phase restriction
+                    phaseFrameLogInd = trajData.frame_number <= lastFrame & trajData.frame_number >= firstFrame;
+                    trajData.filtered(~phaseFrameLogInd) = false;
                     % load skeletal data and check it's not NaN
                     skeletaLoneWorms{fileCtr} = skelData(:,:,trajData.filtered&loneWorms);
                     skeletaInCluster{fileCtr} = skelData(:,:,trajData.filtered&inCluster);
