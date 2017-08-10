@@ -20,7 +20,7 @@ postExitDuration = 5;
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
-showPlots = false;
+showPlots = true;
 plotDiagnostics = false;
 nEigenworms = 6;
 
@@ -199,9 +199,9 @@ for numCtr = 1:length(wormnums)
                     set(figure(figCtr),'name',[figPrefix{figCtr} ' ' figName ...
                         ' '  analysisType{1} ' ' num2str(numFiles) ' datasets ' num2str(size(angleArray,1),2) ' frames'])
                     figFileName = ['figures/diagnostics/' figPrefix{figCtr} '_' analysisType{1} '_' figName '.eps'];
-                    %exportfig(figure(figCtr),figFileName,exportOptions)
-                    %system(['epstopdf ' figFileName]);
-                    %system(['rm ' figFileName]);
+                    exportfig(figure(figCtr),figFileName,exportOptions)
+                    system(['epstopdf ' figFileName]);
+                    system(['rm ' figFileName]);
                 end
             end
         end
