@@ -3,13 +3,10 @@ clear
 % - parfor does not properly work for case wormnum 1W
 
 % specify how to phase-restrict
-phase = 'fullMovie';  %'fullMovie', 'joining', or 'sweeping'.
+phase = 'joining'; % 'fullMovie', 'joining', or 'sweeping'.
 
 % figure export options
 exportOptions = struct('Color','rgb');
-
-% specify the duration (in seconds) after a worm exits a cluster to be included in the leave cluster analysis
-postExitDuration = 5;
 
 % frames to use for calculation of eigenworms, for each combination of
 % strain and worm number
@@ -23,7 +20,7 @@ postExitDuration = 5;
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
-showPlots = false;
+showPlots = true;
 plotDiagnostics = false;
 nEigenworms = 6;
 
@@ -31,11 +28,12 @@ pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 neighbrCutOff = 500; % distance in microns to consider a neighbr close
 inClusterNeighbourNum = 3;
 minNeighbrDist = 1500;
-wormnums = {'1W','40','HD'};
 strains = {'npr1','N2'};
+wormnums = {'1W','40','HD'};
 if ~strcmp(phase, 'fullMovie')
     wormnums = {'40'};
 end
+
 maxBlobSize = 2.5e5;
 minSkelLength = 850;
 maxSkelLength = 1500;
@@ -47,8 +45,9 @@ for numCtr = 1:length(wormnums)
         close all
         %% load data
         % not all results may be present, so check how many
-        if strcmp(wormnum, '40')
-            [phaseFrames,filenames,~] = xlsread(['../trackingAnalysis/datalists/' strains{strainCtr} '_' wormnum '_r_list.xlsx'],1,'A1:E15','basic');
+        if ~strcmp(phase, 'fullMovie')
+            [phaseFrames,filenames,~] = xlsread(['../trackingAnalysis/datalists/' strains{strainCtr} '_' wormnum '_r_list_hamm.xlsx'],1,'A1:E15','basic');
+            phaseFrames = phaseFrames-1; % to correct for python indexing at 0
         else
             filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
         end
@@ -70,6 +69,16 @@ for numCtr = 1:length(wormnums)
                 blobFeats = h5read(filename,'/blob_features');
                 trajData = h5read(filename,'/trajectories_data');
                 skelData = h5read(filename,'/skeleton');
+                if strcmp(phase, 'fullMovie')
+                    firstFrame = 0;
+                    lastFrame = phaseFrames(fileCtr,4);
+                elseif strcmp(phase,'joining')
+                    firstFrame = phaseFrames(fileCtr,1);
+                    lastFrame = phaseFrames(fileCtr,2);
+                elseif strcmp(phase,'sweeping')
+                    firstFrame = phaseFrames(fileCtr,3);
+                    lastFrame = phaseFrames(fileCtr,4);
+                end
                 %% filter data
                 % filter by blob size and intensity
                 if contains(filename,'55')||contains(filename,'54')
@@ -92,17 +101,14 @@ for numCtr = 1:length(wormnums)
                     min_neighbr_dist = h5read(filename,'/min_neighbr_dist');
                     num_close_neighbrs = h5read(filename,'/num_close_neighbrs');
                     neighbr_dist = h5read(filename,'/neighbr_distances');
-                    inCluster = num_close_neighbrs>=minNumNeighbrs;
+                    inCluster = num_close_neighbrs>=inClusterNeighbourNum;
                     smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
                         |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
                         |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
-                    [leaveCluster, loneWorms] = findLeaveClusterWorms(filename,minNumNeighbrs,minNeighbrDist,postExitDuration);
-                    % apply phase restriction (only happens in 40 worm case)
-                    if strcmp(wormnum,'40')
-                        [firstFrame, lastFrame] = getPhaseRestrictionFrames(phaseFrames,phase,fileCtr);
-                        phaseFrameLogInd = trajData.frame_number <= lastFrame & trajData.frame_number >= firstFrame;
-                        trajData.filtered(~phaseFrameLogInd) = false;
-                    end
+                    [leaveCluster, loneWorms] = findLeaveClusterWorms(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration);
+                    % apply phase restriction
+                    phaseFrameLogInd = trajData.frame_number <= lastFrame & trajData.frame_number >= firstFrame;
+                    trajData.filtered(~phaseFrameLogInd) = false;
                     % load skeletal data and check it's not NaN
                     skeletaLoneWorms{fileCtr} = skelData(:,:,trajData.filtered&loneWorms);
                     skeletaInCluster{fileCtr} = skelData(:,:,trajData.filtered&inCluster);
@@ -193,9 +199,9 @@ for numCtr = 1:length(wormnums)
                     set(figure(figCtr),'name',[figPrefix{figCtr} ' ' figName ...
                         ' '  analysisType{1} ' ' num2str(numFiles) ' datasets ' num2str(size(angleArray,1),2) ' frames'])
                     figFileName = ['figures/diagnostics/' figPrefix{figCtr} '_' analysisType{1} '_' figName '.eps'];
-                    %exportfig(figure(figCtr),figFileName,exportOptions)
-                    %system(['epstopdf ' figFileName]);
-                    %system(['rm ' figFileName]);
+                    exportfig(figure(figCtr),figFileName,exportOptions)
+                    system(['epstopdf ' figFileName]);
+                    system(['rm ' figFileName]);
                 end
             end
         end
