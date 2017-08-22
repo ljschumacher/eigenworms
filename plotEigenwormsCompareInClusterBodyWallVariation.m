@@ -18,7 +18,7 @@ wormnums = {'HD', '40', '1W'};
 if ~strcmp(phase, 'fullMovie')
     wormnums = {'40'};
 end
-analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};
+analysisTypes = {'loneWorms','inCluster','leaveCluster','smallCluster'};
 nVariations = 5;
 weights = linspace(-1,1,nVariations)';
 
