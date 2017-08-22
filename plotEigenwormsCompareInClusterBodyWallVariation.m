@@ -6,7 +6,7 @@ close all
 clear
 
 % specify how to phase-restrict
-phase = 'fullMovie'; % 'fullMovie', 'joining', or 'sweeping'.
+phase = 'joining'; % 'fullMovie', 'joining', or 'sweeping'.
 
 % figure export options
 exportOptions = struct('Color','rgb');

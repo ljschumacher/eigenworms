@@ -3,7 +3,7 @@ clear
 % - parfor does not properly work for case wormnum 1W
 
 % specify how to phase-restrict
-phase = 'fullMovie';  %'fullMovie', 'joining', or 'sweeping'.
+phase = 'joining';  %'fullMovie', 'joining', or 'sweeping'.
 
 % figure export options
 exportOptions = struct('Color','rgb');
@@ -23,8 +23,8 @@ postExitDuration = 5;
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
-showPlots = false;
-plotDiagnostics = false;
+showPlots = true;
+plotDiagnostics = true;
 nEigenworms = 6;
 
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
@@ -92,11 +92,11 @@ for numCtr = 1:length(wormnums)
                     min_neighbr_dist = h5read(filename,'/min_neighbr_dist');
                     num_close_neighbrs = h5read(filename,'/num_close_neighbrs');
                     neighbr_dist = h5read(filename,'/neighbr_distances');
-                    inCluster = num_close_neighbrs>=minNumNeighbrs;
+                    inCluster = num_close_neighbrs>=inClusterNeighbourNum ;
                     smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
                         |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
                         |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
-                    [leaveCluster, loneWorms] = findLeaveClusterWorms(filename,minNumNeighbrs,minNeighbrDist,postExitDuration);
+                    [leaveCluster, loneWorms] = findLeaveClusterWorms(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration);
                     % apply phase restriction (only happens in 40 worm case)
                     if strcmp(wormnum,'40')
                         [firstFrame, lastFrame] = getPhaseRestrictionFrames(phaseFrames,phase,fileCtr);
