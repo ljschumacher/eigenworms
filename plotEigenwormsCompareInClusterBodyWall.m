@@ -4,8 +4,8 @@
 close all
 clear
 
-% specify whether to phase-restrict
-phase = 'fullMovie'; % 'fullMovie' or 'stationary'
+% specify how to phase-restrict
+phase = 'sweeping'; % 'fullMovie', 'joining', or 'sweeping'.
 
 % figure export options
 exportOptions = struct('Color','rgb');
@@ -14,7 +14,7 @@ nEigenworms = 4;
 strains = {'N2', 'npr1'};
 nStrains = length(strains);
 wormnums = {'40','HD'};
-if strcmp(phase, 'stationary')
+if ~strcmp(phase, 'fullMovie')
     wormnums = {'40'};
 end
 analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};

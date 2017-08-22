@@ -2,34 +2,40 @@ clear
 % issues/todo:
 % - parfor does not properly work for case wormnum 1W
 
-% specify whether to phase-restrict
-phase = 'fullMovie'; % 'fullMovie' or 'stationary'
+% specify how to phase-restrict
+phase = 'joining';  %'fullMovie', 'joining', or 'sweeping'.
 
 % figure export options
 exportOptions = struct('Color','rgb');
 
+% specify the duration (in seconds) after a worm exits a cluster to be included in the leave cluster analysis
+postExitDuration = 5;
+
 % frames to use for calculation of eigenworms, for each combination of
 % strain and worm number
 numSamples = 10000;
+
+% specify the duration after a worm exits a cluster to be considered for
+% leave cluster analysis
+postExitDuration = 5;
 
 % load master eigenworms for projections
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
 showPlots = true;
-plotDiagnostics = false;
+plotDiagnostics = true;
 nEigenworms = 6;
 
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 neighbrCutOff = 500; % distance in microns to consider a neighbr close
-minNumNeighbrs = 3;
+inClusterNeighbourNum = 3;
 minNeighbrDist = 1500;
-strains = {'npr1','N2'};
 wormnums = {'1W','40','HD'};
-if strcmp(phase, 'stationary')
+strains = {'npr1','N2'};
+if ~strcmp(phase, 'fullMovie')
     wormnums = {'40'};
 end
-
 maxBlobSize = 2.5e5;
 minSkelLength = 850;
 maxSkelLength = 1500;
@@ -41,8 +47,8 @@ for numCtr = 1:length(wormnums)
         close all
         %% load data
         % not all results may be present, so check how many
-        if strcmp(phase, 'stationary')
-            [lastFrames,filenames,~] = xlsread(['../trackingAnalysis/datalists/' strains{strainCtr} '_' wormnum '_r_list.xlsx'],1,'A1:B15','basic');
+        if strcmp(wormnum, '40')
+            [phaseFrames,filenames,~] = xlsread(['../trackingAnalysis/datalists/' strains{strainCtr} '_' wormnum '_r_list.xlsx'],1,'A1:E15','basic');
         else
             filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
         end
@@ -56,6 +62,7 @@ for numCtr = 1:length(wormnums)
         end
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
+        % go through each file
         for fileCtr=1:numFiles % can be parfor
             filename = filenames{fileCtr};
             if exist(filename,'file')
@@ -85,22 +92,15 @@ for numCtr = 1:length(wormnums)
                     min_neighbr_dist = h5read(filename,'/min_neighbr_dist');
                     num_close_neighbrs = h5read(filename,'/num_close_neighbrs');
                     neighbr_dist = h5read(filename,'/neighbr_distances');
-                    loneWorms = min_neighbr_dist>=minNeighbrDist;
-                    inCluster = num_close_neighbrs>=minNumNeighbrs;
+                    inCluster = num_close_neighbrs>=inClusterNeighbourNum ;
                     smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
                         |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
                         |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
-                    leaveCluster = [false; inCluster(1:end-1)&~inCluster(2:end)];
-                    leaveClusterExtended = unique(find(leaveCluster) + [0:5*double(frameRate)]);% add 5 more second after each leaving event
-                    leaveClusterExtended = leaveClusterExtended(leaveClusterExtended<numel(leaveCluster)); % exclude frames beyond highest frame number
-                    leaveCluster(leaveClusterExtended) = true;
-                    leaveCluster(inCluster) = false; % exclude times when worm moved back
-                    leaveCluster(loneWorms)=false; % exclude worms that have become lone worm
-                    % restrict analysis to stationary phase only
-                    if strcmp(phase,'stationary')
-                        firstFrame = double(round(max(trajData.frame_number)/10)); % define starting frame as 10% into the movie
-                        lastFrame = lastFrames(fileCtr);
-                        phaseFrameLogInd = trajData.frame_number < lastFrame & trajData.frame_number > firstFrame;
+                    [leaveCluster, loneWorms] = findLeaveClusterWorms(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration);
+                    % apply phase restriction (only happens in 40 worm case)
+                    if strcmp(wormnum,'40')
+                        [firstFrame, lastFrame] = getPhaseRestrictionFrames(phaseFrames,phase,fileCtr);
+                        phaseFrameLogInd = trajData.frame_number <= lastFrame & trajData.frame_number >= firstFrame;
                         trajData.filtered(~phaseFrameLogInd) = false;
                     end
                     % load skeletal data and check it's not NaN
@@ -193,9 +193,9 @@ for numCtr = 1:length(wormnums)
                     set(figure(figCtr),'name',[figPrefix{figCtr} ' ' figName ...
                         ' '  analysisType{1} ' ' num2str(numFiles) ' datasets ' num2str(size(angleArray,1),2) ' frames'])
                     figFileName = ['figures/diagnostics/' figPrefix{figCtr} '_' analysisType{1} '_' figName '.eps'];
-                    exportfig(figure(figCtr),figFileName,exportOptions)
-                    system(['epstopdf ' figFileName]);
-                    system(['rm ' figFileName]);
+                    %exportfig(figure(figCtr),figFileName,exportOptions)
+                    %system(['epstopdf ' figFileName]);
+                    %system(['rm ' figFileName]);
                 end
             end
         end
