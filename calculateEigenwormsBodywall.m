@@ -15,10 +15,6 @@ postExitDuration = 5;
 % strain and worm number
 numSamples = 10000;
 
-% specify the duration after a worm exits a cluster to be considered for
-% leave cluster analysis
-postExitDuration = 5;
-
 % load master eigenworms for projections
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
@@ -89,14 +85,7 @@ for numCtr = 1:length(wormnums)
                     skeletaLoneWorms{fileCtr} = skelData(:,:,trajData.filtered);
                 else % if it is multiworm data, we need to filter for worms in clusters
                     % filter for in-cluster etc
-                    min_neighbr_dist = h5read(filename,'/min_neighbr_dist');
-                    num_close_neighbrs = h5read(filename,'/num_close_neighbrs');
-                    neighbr_dist = h5read(filename,'/neighbr_distances');
-                    inCluster = num_close_neighbrs>=inClusterNeighbourNum ;
-                    smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
-                        |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
-                        |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
-                    [leaveCluster, loneWorms] = findLeaveClusterWorms(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration);
+                    [leaveCluster,loneWorms,inCluster,smallCluster] = findWormCategory(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration);
                     % apply phase restriction (only happens in 40 worm case)
                     if strcmp(wormnum,'40')
                         [firstFrame, lastFrame] = getPhaseRestrictionFrames(phaseFrames,phase,fileCtr);
