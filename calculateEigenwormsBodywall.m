@@ -15,6 +15,10 @@ postExitDuration = 5;
 % strain and worm number
 numSamples = 10000;
 
+% specify the duration after a worm exits a cluster to be considered for
+% leave cluster analysis
+postExitDuration = 5;
+
 % load master eigenworms for projections
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
@@ -86,6 +90,7 @@ for numCtr = 1:length(wormnums)
                 else % if it is multiworm data, we need to filter for worms in clusters
                     % filter for in-cluster etc
                     [leaveCluster,loneWorms,inCluster,smallCluster] = findWormCategory(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration);
+
                     % apply phase restriction (only happens in 40 worm case)
                     if strcmp(wormnum,'40')
                         [firstFrame, lastFrame] = getPhaseRestrictionFrames(phaseFrames,phase,fileCtr);
