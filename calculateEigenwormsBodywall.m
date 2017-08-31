@@ -2,27 +2,40 @@ clear
 % issues/todo:
 % - parfor does not properly work for case wormnum 1W
 
+% specify how to phase-restrict
+phase = 'joining';  %'fullMovie', 'joining', or 'sweeping'.
+
 % figure export options
 exportOptions = struct('Color','rgb');
+
+% specify the duration (in seconds) after a worm exits a cluster to be included in the leave cluster analysis
+postExitDuration = 5;
 
 % frames to use for calculation of eigenworms, for each combination of
 % strain and worm number
 numSamples = 10000;
+
+% specify the duration after a worm exits a cluster to be considered for
+% leave cluster analysis
+postExitDuration = 5;
 
 % load master eigenworms for projections
 load('singleWorm/masterEigenWorms_N2.mat','eigenWorms');
 masterWorms = eigenWorms;
 
 showPlots = true;
-plotDiagnostics = false;
+plotDiagnostics = true;
 nEigenworms = 6;
 
 pixelsize = 100/19.5; % 100 microns are 19.5 pixels
 neighbrCutOff = 500; % distance in microns to consider a neighbr close
-minNumNeighbrs = 3;
+inClusterNeighbourNum = 3;
 minNeighbrDist = 1500;
+wormnums = {'1W','40','HD'};
 strains = {'npr1','N2'};
-wormnums = {'40','HD','1W'};
+if ~strcmp(phase, 'fullMovie')
+    wormnums = {'40'};
+end
 maxBlobSize = 2.5e5;
 minSkelLength = 850;
 maxSkelLength = 1500;
@@ -34,16 +47,22 @@ for numCtr = 1:length(wormnums)
         close all
         %% load data
         % not all results may be present, so check how many
-        filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
+        if strcmp(wormnum, '40')
+            [phaseFrames,filenames,~] = xlsread(['../trackingAnalysis/datalists/' strains{strainCtr} '_' wormnum '_r_list.xlsx'],1,'A1:E15','basic');
+        else
+            filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
+        end
         numFiles = length(filenames);
         % allocate variables
         skeletaLoneWorms = cell(numFiles,1);
         if ~strcmp(wormnum,'1W')
             skeletaInCluster = cell(numFiles,1);
             skeletaSmallCluster = cell(numFiles,1);
+            skeletaLeaveCluster = cell(numFiles,1);
         end
         wormIDs = cell(numFiles,1);
         frameIDs = cell(numFiles,1);
+        % go through each file
         for fileCtr=1:numFiles % can be parfor
             filename = filenames{fileCtr};
             if exist(filename,'file')
@@ -73,17 +92,25 @@ for numCtr = 1:length(wormnums)
                     min_neighbr_dist = h5read(filename,'/min_neighbr_dist');
                     num_close_neighbrs = h5read(filename,'/num_close_neighbrs');
                     neighbr_dist = h5read(filename,'/neighbr_distances');
-                    loneWorms = min_neighbr_dist>=minNeighbrDist;
-                    inCluster = num_close_neighbrs>=minNumNeighbrs;
+                    inCluster = num_close_neighbrs>=inClusterNeighbourNum ;
                     smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
                         |(num_close_neighbrs==3 & neighbr_dist(:,4)>=minNeighbrDist)...
                         |(num_close_neighbrs==4 & neighbr_dist(:,5)>=minNeighbrDist);
+                    [leaveCluster, loneWorms] = findLeaveClusterWorms(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration);
+                    % apply phase restriction (only happens in 40 worm case)
+                    if strcmp(wormnum,'40')
+                        [firstFrame, lastFrame] = getPhaseRestrictionFrames(phaseFrames,phase,fileCtr);
+                        phaseFrameLogInd = trajData.frame_number <= lastFrame & trajData.frame_number >= firstFrame;
+                        trajData.filtered(~phaseFrameLogInd) = false;
+                    end
                     % load skeletal data and check it's not NaN
                     skeletaLoneWorms{fileCtr} = skelData(:,:,trajData.filtered&loneWorms);
                     skeletaInCluster{fileCtr} = skelData(:,:,trajData.filtered&inCluster);
                     skeletaSmallCluster{fileCtr} = skelData(:,:,trajData.filtered&smallCluster);
+                    skeletaLeaveCluster{fileCtr} = skelData(:,:,trajData.filtered&leaveCluster);
                     assert(~any(isnan(skeletaInCluster{fileCtr}(:))))
                     assert(~any(isnan(skeletaSmallCluster{fileCtr}(:))))
+                    assert(~any(isnan(skeletaLeaveCluster{fileCtr}(:))))
                 end
                 assert(~any(isnan(skeletaLoneWorms{fileCtr}(:))))
             else
@@ -95,6 +122,7 @@ for numCtr = 1:length(wormnums)
         if ~strcmp(wormnum,'1W')
             skeletaInCluster = cat(3,skeletaInCluster{:});
             skeletaSmallCluster = cat(3,skeletaSmallCluster{:});
+            skeletaLeaveCluster = cat(3,skeletaLeaveCluster{:});
         end
         % randomly pick numFrames from the data, to not oversample, and create angle arrays from skeleta
         if numSamples<=size(skeletaLoneWorms,3)
@@ -119,10 +147,17 @@ for numCtr = 1:length(wormnums)
             end
             [angleArraySmallCluster, ~] = makeAngleArrayV(squeeze(skeletaSmallCluster(1,:,:))',squeeze(skeletaSmallCluster(2,:,:))');
             clear skeletaSmallCluster % free some memory
+            if numSamples<=size(skeletaLeaveCluster,3)
+                [skeletaLeaveCluster, ~] = datasample(skeletaLeaveCluster,numSamples,3,'Replace',false);
+            else
+                warning(['not enough in cluster worm skeleta to sample from for ' wormnum ' ' strain])
+            end
+            [angleArrayLeaveCluster, ~] = makeAngleArrayV(squeeze(skeletaLeaveCluster(1,:,:))',squeeze(skeletaLeaveCluster(2,:,:))');
+            clear skeletaLeaveCluster % free some memory
         end
         %% find eigenworms
         if ~strcmp(wormnum,'1W')
-            analysisTypes = {'loneWorms','inCluster','smallCluster'};
+            analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};
         else
             analysisTypes = {'loneWorms'};
         end
@@ -134,6 +169,8 @@ for numCtr = 1:length(wormnums)
                     angleArray = angleArrayInCluster;
                 case 'smallCluster'
                     angleArray = angleArraySmallCluster;
+                case 'leaveCluster'
+                    angleArray = angleArrayLeaveCluster;
             end
             [eigenWorms, eigenVals] = findEigenWorms(angleArray, nEigenworms, showPlots);
             % save projections onto reduced dimensions, also for reference
@@ -145,20 +182,20 @@ for numCtr = 1:length(wormnums)
                 /masterWorms(1:nEigenworms,:));
             masterVarExplained = masterEigVals/sum(var(angleArray));
             % save eigenWorms, eigenVals and first few projections
-            save(['results/eigenData_' strain '_' wormnum '_bodywall_' analysisType{1} '.mat'],'eigenWorms',...
+            save(['results/eigenData_' strain '_' wormnum '_bodywall_' analysisType{1} '_' phase '.mat'],'eigenWorms',...
                 'eigenVals','eigenProjections','varExplained','masterProjections',...
                 'masterVarExplained','numFiles','numSamples')
             if showPlots
                 % save plots
-                figName = [strain '_' wormnum ];
+                figName = [strain '_' wormnum '_' phase ];
                 figPrefix = {'var','eig','cov','eigenValueDistribution'};
                 for figCtr = 1:4
                     set(figure(figCtr),'name',[figPrefix{figCtr} ' ' figName ...
                         ' '  analysisType{1} ' ' num2str(numFiles) ' datasets ' num2str(size(angleArray,1),2) ' frames'])
                     figFileName = ['figures/diagnostics/' figPrefix{figCtr} '_' analysisType{1} '_' figName '.eps'];
-                    exportfig(figure(figCtr),figFileName,exportOptions)
-                    system(['epstopdf ' figFileName]);
-                    system(['rm ' figFileName]);
+                    %exportfig(figure(figCtr),figFileName,exportOptions)
+                    %system(['epstopdf ' figFileName]);
+                    %system(['rm ' figFileName]);
                 end
             end
         end
