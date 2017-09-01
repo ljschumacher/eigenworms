@@ -61,8 +61,8 @@ for strainCtr = 1:nStrains
         set(eigWormFig, 'name', ['Strain ' S ' ' N ' eigenworms'])
         figFileName = ['figures/eigenworms_variation_' S '_' N '_' phase '.eps'];
         exportfig(eigWormFig,figFileName,exportOptions)
-        system(['epstopdf ' figFileName]);
-        system(['rm ' figFileName]);
+%         system(['epstopdf ' figFileName]);
+%         system(['rm ' figFileName]);
     end
 end
 %tilefigs()
