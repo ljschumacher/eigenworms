@@ -5,7 +5,6 @@ clear
 % issues/to-do:
 % - filter red channel data further? currently we are assuming that those
 % with feature calculations are filtered fairly well
-% - can we vectorize the loop over frames?
 
 % figure export options
 exportOptions = struct('Color','rg');
@@ -25,23 +24,22 @@ for numCtr = 1:length(wormnums)
     for strainCtr = 1:length(strains)
         strain = strains{strainCtr};
         %% load data
-        filenames_r = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
-        numFiles = length(filenames_r);
+        filenames = importdata(['datalists/' strains{strainCtr} '_' wormnum '_r_list.txt']);
+        numFiles = length(filenames);
         for analysisType = analysisTypes
             peakProjections1 = cell(numFiles,1);
             peakProjections2 = cell(numFiles,1);
             peakProjections3 = cell(numFiles,1);
             peakProjections4 = cell(numFiles,1);
             for fileCtr = 1:numFiles
-                filename_r = filenames_r{fileCtr};
-                if exist(strrep(filename_r,'skeletons','features'),'file')&&exist(filename_r,'file')
-                    features = h5read(strrep(filename_r,'skeletons','features'),'/features_timeseries');
-                    trajData = h5read(filename_r,'/trajectories_data');
-                    frameRate = h5readatt(filename_r,'/plate_worms','expected_fps');
+                filename = filenames{fileCtr};
+                if exist(strrep(filename,'skeletons','features'),'file')&&exist(filename,'file')
+                    features = h5read(strrep(filename,'skeletons','features'),'/features_timeseries');
+                    frameRate = h5readatt(filename,'/plate_worms','expected_fps');
                     % filter for in-cluster etc
-                    min_neighbr_dist = h5read(filename_r,'/min_neighbr_dist');
-                    num_close_neighbrs = h5read(filename_r,'/num_close_neighbrs');
-                    neighbr_dist = h5read(filename_r,'/neighbr_distances');
+                    min_neighbr_dist = h5read(filename,'/min_neighbr_dist');
+                    num_close_neighbrs = h5read(filename,'/num_close_neighbrs');
+                    neighbr_dist = h5read(filename,'/neighbr_distances');
                     loneWorms = min_neighbr_dist>=minNeighbrDist;
                     inCluster = num_close_neighbrs>=minNumNeighbrs;
                     smallCluster = (num_close_neighbrs==2 & neighbr_dist(:,3)>=minNeighbrDist)...
@@ -85,10 +83,10 @@ for numCtr = 1:length(wormnums)
                             features.eigen_projection_4(features.filtered),'MinPeakProminence',0.5);
                             -findpeaks(-features.eigen_projection_4(features.filtered),'MinPeakProminence',0.5)];
                     else
-                        warning(['All worms filtered out for ' filename_r ])
+                        warning(['All worms filtered out for ' filename ])
                     end
                 else
-                    warning(['Not all necessary tracking results present for ' filename_r ])
+                    warning(['Not all necessary tracking results present for ' filename ])
                 end
             end
             % pool data from multiple recordings

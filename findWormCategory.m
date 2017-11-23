@@ -1,4 +1,5 @@
-function [leaveClusterLogInd, loneWormLogInd, inClusterLogInd,smallClusterLogInd] = findWormCategory(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration)
+function [leaveClusterLogInd, loneWormLogInd, inClusterLogInd,smallClusterLogInd] =...
+    findWormCategory(filename,inClusterNeighbourNum,minNeighbrDist,postExitDuration)
 
 % function takes the path of the skeleton file and various worm
 % classification variables and returns logical indices for leaveCluster and
