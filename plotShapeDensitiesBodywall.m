@@ -12,7 +12,7 @@ nComponents = 4;
 
 strains = {'N2', 'npr1'};
 nStrains = length(strains);
-wormnums = {'HD','40','1W'};
+wormnums = {'40'}%{'HD','40','1W'};
 for numCtr = 1:length(wormnums)
     N = wormnums{numCtr};
     % loop through different strains

@@ -6,21 +6,29 @@ close all
 clear
 
 % specify how to phase-restrict
-phase = 'sweeping'; % 'fullMovie', 'joining', or 'sweeping'.
+phase = 'joining'; % 'fullMovie', 'joining', or 'sweeping'.
 
 % figure export options
-exportOptions = struct('Color','rgb');
+exportOptions = struct('Format','eps2',...
+    'Color','rgb',...
+    'Width',10,...
+    'Resolution',300,...
+    'FontMode','fixed',...
+    'FontSize',10,...
+    'LineWidth',1,...
+    'Renderer','painters');
 
 nEigenworms = 4;
 strains = {'N2', 'npr1'};
 nStrains = length(strains);
-wormnums = {'HD','40','1W'};
+wormnums = {'40'}%{'HD','40','1W'};
 if ~strcmp(phase, 'fullMovie')
     wormnums = {'40'};
 end
-analysisTypes = {'loneWorms','inCluster','smallCluster','leaveCluster'};
-nVariations = 5;
-weights = linspace(-1,1,nVariations)';
+analysisTypes = {'loneWorms','inCluster'}%,'smallCluster','leaveCluster'};
+analysisLabels = {'lone worms', 'in cluster'};
+quants = [0.2, 0.4, 0.6, 0.8];
+nVariations = length(quants);
 
 % for reference, eigenworms from Brown et al. 2013
 reference = load('eigenWorms.mat');
@@ -45,12 +53,12 @@ for strainCtr = 1:nStrains
                 for eigCtr = 1:nEigenworms
                     subplot(nEigenworms,length(analysisTypes),(eigCtr-1)*length(analysisTypes)+dataCtr), hold on
                     set(gca,'ColorOrder',parula(nVariations),'Color','none')
-                    sigma2 = 2*std(masterProjections(:,eigCtr));
-                    [x, y] = angles2xy(sigma2*weights*reference.eigenWorms(eigCtr,:));
+                    weights = quantile(abs(masterProjections(:,eigCtr)),quants);
+                    [x, y] = angles2xy(weights'*reference.eigenWorms(eigCtr,:));
                     % plot variation of reference eigenworms in real space, centered on y=0
                     plot((x-mean(x,2))',(y-mean(y,2))','LineWidth',2)
                     if eigCtr==1
-                        title(analysisType,'FontWeight','normal')
+                        title(analysisLabels{dataCtr},'FontWeight','normal')
                     end
                     if numCtr==1
                         ylabel(num2str(eigCtr))
